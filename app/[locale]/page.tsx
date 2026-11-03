@@ -167,32 +167,25 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* ============ 5. BIOGRAPHY (Magazine Split Layout on Mobile) ============ */}
+      {/* ============ 5. BIOGRAPHY ============ */}
       <section id="about" className="relative scroll-mt-24 border-t border-border bg-background">
-        
-        {/* پس‌زمینه فقط برای دسکتاپ */}
         <div className="hidden md:block absolute inset-0 -z-20 bg-cover bg-center bg-no-repeat opacity-70" style={{ backgroundImage: "url('/bio-bg.jpg')" }} />
         <div className="hidden md:block absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/85 to-transparent" />
         <div className="hidden md:block absolute inset-x-0 top-0 -z-10 h-40 md:h-56 bg-gradient-to-b from-background to-transparent" />
 
         <div className="relative z-10 mx-auto w-full max-w-7xl md:px-6 md:py-32 grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-0 items-end">
           
-          {/* تصویر (فقط موبایل) با گرادیانت‌های نرم برای محو شدن */}
           <div className="relative block w-full h-[65vh] md:hidden">
             <div 
               className="absolute inset-0 bg-cover bg-center bg-no-repeat"
               style={{ backgroundImage: "url('/bio-bg.jpg')" }}
             />
-            {/* گرادیانت بالای عکس (محو شدن توی هدر) */}
             <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background to-transparent" />
-            {/* گرادیانت پایین عکس (محو شدن توی متن‌ها) */}
             <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/80 to-transparent" />
           </div>
 
-          {/* ستون خالی برای دسکتاپ */}
           <div className="hidden md:block"></div>
 
-          {/* محتوای متنی */}
           <div className="flex flex-col items-start text-start max-w-xl px-6 py-16 md:px-0 md:py-0 md:mt-48">
             <div className="mb-6 flex items-center justify-start gap-3 text-[10px] font-mono uppercase tracking-[0.25em] text-muted">
               <span className="text-brand">05</span>

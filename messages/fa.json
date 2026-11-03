@@ -152,6 +152,7 @@
     "formTimeline": "زمان موردنظر",
     "formTimelinePlaceholder": "مثلاً ۱ ماه",
     "formSubmit": "ارسال درخواست",
+    "formSubmitting": "در حال ارسال...",
     "validation": {
       "required": "این فیلد الزامی است.",
       "invalidContact": "لطفاً یک ایمیل یا شماره تماس معتبر وارد کنید.",

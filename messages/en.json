@@ -152,6 +152,7 @@
     "formTimeline": "Timeline",
     "formTimelinePlaceholder": "e.g., 1 month",
     "formSubmit": "Submit Request",
+    "formSubmitting": "Submitting...",
     "validation": {
       "required": "This field is required.",
       "invalidContact": "Please enter a valid email or phone number.",

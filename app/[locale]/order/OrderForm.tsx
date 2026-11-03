@@ -43,21 +43,20 @@ export function OrderForm() {
       });
 
       if (response.ok) {
-        alert("درخواست شما با موفقیت ثبت شد! به زودی با شما تماس می‌گیریم.");
+        alert(t("formSubmit") + " ✅");
         setIsSuccess(true);
         reset(); 
       } else {
-        alert("خطایی در سرور رخ داد. لطفا دوباره تلاش کنید.");
+        alert("Error");
       }
     } catch (error) {
       console.error(error);
-      alert("خطای شبکه. اتصال اینترنت خود را بررسی کنید.");
+      alert("Network Error");
     }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 md:space-y-10">
-      {/* Name & Contact */}
       <div className="grid gap-8 md:grid-cols-2 md:gap-10">
         <div className="relative">
           <label className="mb-2 block text-xs font-mono uppercase tracking-widest text-muted">
@@ -92,7 +91,6 @@ export function OrderForm() {
         </div>
       </div>
 
-      {/* Project Type */}
       <div>
         <label className="mb-2 block text-xs font-mono uppercase tracking-widest text-muted">
           {t("formProjectType")}
@@ -114,7 +112,6 @@ export function OrderForm() {
         )}
       </div>
 
-      {/* Description */}
       <div>
         <label className="mb-2 block text-xs font-mono uppercase tracking-widest text-muted">
           {t("formDescription")}
@@ -132,7 +129,6 @@ export function OrderForm() {
         )}
       </div>
 
-      {/* Budget & Timeline */}
       <div className="grid gap-8 md:grid-cols-2 md:gap-10">
         <div>
           <label className="mb-2 block text-xs font-mono uppercase tracking-widest text-muted">
@@ -156,14 +152,13 @@ export function OrderForm() {
         </div>
       </div>
 
-      {/* Submit Button */}
       <div className="pt-4 md:pt-6">
         <button
           type="submit"
           disabled={!isValid || isSubmitting}
           className="group flex w-full items-center justify-center gap-3 rounded-md bg-brand px-8 py-4 text-sm font-semibold text-brand-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
         >
-          {isSubmitting ? "در حال ارسال..." : t("formSubmit")}
+          {isSubmitting ? t("formSubmitting") : t("formSubmit")}
           {!isSubmitting && (
             <span className="transition group-hover:translate-x-1 rtl:rotate-180">
               →
