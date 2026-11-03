@@ -168,13 +168,21 @@ export default async function HomePage({
       </section>
 
       {/* ============ 5. BIOGRAPHY ============ */}
-      <section id="about" className="relative scroll-mt-24 border-t border-border bg-background">
-        <div className="hidden md:block absolute inset-0 -z-20 bg-cover bg-center bg-no-repeat opacity-70" style={{ backgroundImage: "url('/bio-bg.jpg')" }} />
-        <div className="hidden md:block absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/85 to-transparent" />
-        <div className="hidden md:block absolute inset-x-0 top-0 -z-10 h-40 md:h-56 bg-gradient-to-b from-background to-transparent" />
+      {/* مطمئن شو رنگ پس‌زمینه توپر (bg-background) اینجا نباشه */}
+      <section id="about" className="relative scroll-mt-24 border-t border-border">
+        
+        {/* لایه عکس دسکتاپ */}
+        <div className="hidden md:block absolute inset-0 z-0">
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-70" 
+            style={{ backgroundImage: "url('/bio-bg.jpg')" }} 
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#111315] via-[#111315]/80 to-transparent" />
+        </div>
 
         <div className="relative z-10 mx-auto w-full max-w-7xl md:px-6 md:py-32 grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-0 items-end">
           
+          {/* لایه عکس موبایل */}
           <div className="relative block w-full h-[65vh] md:hidden">
             <div 
               className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -186,6 +194,7 @@ export default async function HomePage({
 
           <div className="hidden md:block"></div>
 
+          {/* متن */}
           <div className="flex flex-col items-start text-start max-w-xl px-6 py-16 md:px-0 md:py-0 md:mt-48">
             <div className="mb-6 flex items-center justify-start gap-3 text-[10px] font-mono uppercase tracking-[0.25em] text-muted">
               <span className="text-brand">05</span>
@@ -206,12 +215,12 @@ export default async function HomePage({
                 <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
               </svg>
               
-              <p className="text-lg font-medium leading-relaxed text-foreground md:text-xl lg:text-2xl max-w-lg text-start">
+              <p className="text-lg font-medium leading-relaxed text-foreground md:text-xl lg:text-2xl max-w-lg text-start drop-shadow-sm">
                 {tBio("p1")}
               </p>
             </div>
 
-            <div className="space-y-5 text-sm leading-relaxed text-muted md:text-base max-w-lg text-start">
+            <div className="space-y-5 text-sm leading-relaxed text-muted md:text-base max-w-lg text-start drop-shadow-sm">
               <p>{tBio("p2")}</p>
               <p>{tBio("p3")}</p>
             </div>
