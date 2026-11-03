@@ -1,0 +1,171 @@
+{
+  "Metadata": {
+    "title": "Parham Batouie | Web Designer & Developer",
+    "description": "Custom, modern and professional web design and development focused on user experience, performance and visual identity."
+  },
+  "Nav": {
+    "home": "Home",
+    "services": "Services",
+    "work": "Work",
+    "about": "Biography",
+    "contact": "Contact Me",
+    "order": "Start a Project",
+    "switchLanguage": "FA",
+    "brandName": "Parham Batouie",
+    "brandTitle": "Web Designer & Developer"
+  },
+  "Hero": {
+    "title": "I turn ideas into <hl>digital</hl> experiences.",
+    "tagline": "I'm Parham Batouie, a web designer and developer",
+    "viewServices": "View Services",
+    "ctaPrimary": "Start a Project",
+    "ctaSecondary": "About Me",
+    "scrollHint": "Scroll"
+  },
+  "Services": {
+    "title": "Specialized Services",
+    "intro": "Each project is designed and executed based on your business's real needs.",
+    "ctaNote": "Looking for something different? Let's talk about your project.",
+    "ctaButton": "Start a Project",
+    "inquiryLabel": "Custom",
+    "items": {
+      "custom": {
+        "title": "Custom Website Design",
+        "description": "UI design and visual structure tailored to your brand identity, business goals, and audience needs — modern, minimal, and user-centered.",
+        "priceNote": "Starting at",
+        "price": "$66",
+        "priceToman": "≈ 18M Toman",
+        "inquiry": false
+      },
+      "corporate": {
+        "title": "Corporate & Business Websites",
+        "description": "Professional websites to present your business, services, and products — building a credible and distinctive digital presence.",
+        "priceNote": "Starting at",
+        "price": "$66",
+        "priceToman": "≈ 18M Toman",
+        "inquiry": false
+      },
+      "development": {
+        "title": "Development & Implementation",
+        "description": "Turning designs into functional, responsive, and well-structured websites using modern web technologies and AI-assisted development tools.",
+        "priceNote": "",
+        "price": "Request a quote",
+        "priceToman": "Based on features and complexity",
+        "inquiry": true
+      }
+    }
+  },
+  "Features": {
+    "title": "Additional Features",
+    "note": "Additional feature costs are determined after reviewing project requirements.",
+    "items": [
+      "Custom page design and implementation",
+      "Responsive design for mobile, tablet, and desktop",
+      "Contact and communication forms",
+      "Interactive features",
+      "Custom feature development",
+      "Service and tool integrations",
+      "Multilingual website design"
+    ]
+  },
+  "Work": {
+    "title": "Selected Work",
+    "comingSoon": "Coming Soon",
+    "description": "A collection of web design and development projects is being prepared. Examples of design approach, technical capabilities, and completed projects will be published here soon."
+  },
+  "Biography": {
+    "title": "Biography",
+    "subtitle": "Web Designer & Developer. Crafting distinctive digital experiences.",
+    "p1": "I'm Parham Batouie, a web designer and developer working on creating and implementing digital experiences.",
+    "p2": "My approach to web design combines modern aesthetics with precise technical structure. From UI design and page architecture to development and feature implementation, I strive to shape each project around its real identity and goals.",
+    "p3": "In my workflow, I use web technologies and AI tools to improve development speed, evaluate solutions, and raise output quality.",
+    "timelineTitle": "Career Path",
+    "timeline": [
+      { "year": "2024 - Present", "title": "Freelance Developer", "desc": "Designing and building custom websites for various businesses." },
+      { "year": "2023 - 2024", "title": "UI Designer", "desc": "Collaborating on digital platform design with a focus on UX." },
+      { "year": "2022 - 2023", "title": "Web Journey Begins", "desc": "Deep dive into front-end development and responsive design." }
+    ],
+    "skillsTitle": "Skills & Principles",
+    "skillsSubtitle": "My tools and approaches for creating digital products.",
+    "skills": [
+      "Professional web UI design",
+      "UX design and page structure",
+      "Custom website design and development",
+      "Modern and interactive UI implementation",
+      "Responsive website design",
+      "Structure and performance optimization",
+      "AI in design and development workflows"
+    ],
+    "principlesTitle": "Work Principles",
+    "principles": [
+      "Quality and precision in execution",
+      "Attention to detail",
+      "Design tailored to each project's needs",
+      "Commitment to the final result"
+    ],
+    "experience": "1 year of experience",
+    "photoPlaceholder": "Parham"
+  },
+  "Process": {
+    "title": "Process",
+    "steps": {
+      "s1": { "title": "Consultation", "description": "Understanding needs, goals, and business identity" },
+      "s2": { "title": "Design", "description": "UI design and visual structure" },
+      "s3": { "title": "Development", "description": "Website development and implementation" },
+      "s4": { "title": "Delivery", "description": "Testing, launch, and training" }
+    }
+  },
+  "Contact": {
+    "title": "Direct Contact",
+    "subtitle": "If you have an idea or want to start your project, proceed through the order form. For faster conversations, message me on the social platforms below.",
+    "startProject": "Submit Project Request",
+    "socialTitle": "Social Media",
+    "instagramLabel": "Instagram",
+    "whatsappLabel": "WhatsApp",
+    "telegramLabel": "Telegram",
+    "baleLabel": "Bale",
+    "instagramValue": "YOUR_INSTAGRAM_ID",
+    "whatsappValue": "YOUR_PHONE_NUMBER",
+    "telegramValue": "YOUR_TELEGRAM_ID",
+    "baleValue": "YOUR_BALE_ID"
+  },
+  "Order": {
+    "title": "Start a Project",
+    "subtitle": "Fill out the form below so we can talk about your idea.",
+    "infoTitle": "What happens next?",
+    "step1Title": "1. Initial Review",
+    "step1Desc": "I read your idea and review the requirements.",
+    "step2Title": "2. Contact",
+    "step2Desc": "I will contact you within 24 hours.",
+    "step3Title": "3. Proposal",
+    "step3Desc": "You receive a price and timeline proposal.",
+    "formName": "Full Name",
+    "formContact": "Email or Phone",
+    "formProjectType": "Project Type",
+    "formTypeCustom": "Custom Website Design",
+    "formTypeCorporate": "Corporate Website",
+    "formTypeDev": "Development & Implementation",
+    "formTypeOther": "Other",
+    "formDescription": "Project Description",
+    "formBudget": "Estimated Budget",
+    "formBudgetPlaceholder": "e.g., $500",
+    "formTimeline": "Timeline",
+    "formTimelinePlaceholder": "e.g., 1 month",
+    "formSubmit": "Submit Request",
+    "validation": {
+      "required": "This field is required.",
+      "invalidContact": "Please enter a valid email or phone number.",
+      "minDescription": "Description must be at least 10 characters."
+    }
+  },
+  "NotFound": {
+    "title": "Page Not Found!",
+    "subtitle": "It seems you took a wrong turn or this page has been removed.",
+    "backHome": "Back to Home"
+  },
+  "Footer": {
+    "tagline": "Designing and developing digital experiences",
+    "navTitle": "Pages",
+    "rights": "This website belongs to Parham Batouie."
+  }
+}
