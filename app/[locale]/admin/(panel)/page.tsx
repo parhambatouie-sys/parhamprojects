@@ -41,7 +41,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-10">
-      {/* Header & Notification */}
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="mb-2 flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.25em] text-muted">
@@ -53,7 +52,6 @@ export default function AdminDashboard() {
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Notification Bell */}
           <div className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-muted transition hover:text-white">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -74,7 +72,6 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      {/* Stats Grid */}
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, i) => (
           <div key={i} className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 hover:border-brand/30 hover:bg-white/[0.03]">
@@ -93,12 +90,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         ))}
-      </div>
-      
-      <div className="text-center pt-10">
-          <Link href={`/${locale}/admin/orders`} className="text-sm text-brand hover:underline">
-             رفتن به صفحه مدیریت سفارش‌ها
-          </Link>
       </div>
     </div>
   );
