@@ -52,7 +52,6 @@ export default async function BlogPostPage({
 
   const isRtl = locale === "fa";
 
-  // داده‌های ساختاریافته برای گوگل
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -83,7 +82,6 @@ export default async function BlogPostPage({
             {t("backToBlog")}
           </Link>
 
-          {/* هدر مقاله */}
           <div className="mb-16 md:mb-24 text-center">
             <div className="mb-6 flex items-center justify-center gap-4">
               <span className="rounded-full border border-brand/30 bg-brand/10 px-4 py-1.5 text-[10px] font-mono tracking-widest text-brand">
@@ -102,7 +100,6 @@ export default async function BlogPostPage({
             </div>
           </div>
 
-          {/* متن مقاله */}
           <div className="prose prose-invert prose-lg max-w-none text-muted leading-[1.9] md:leading-[2]">
             {post.content[locale as "fa" | "en"].split("\n\n").map((paragraph, index) => (
               <p key={index} className="mb-10 text-base md:text-xl font-light">
@@ -111,9 +108,9 @@ export default async function BlogPostPage({
             ))}
           </div>
 
-          {/* بخش CTA */}
-          <div className="mt-24 rounded-[2rem] border border-white/10 bg-[url('/bio-bg.jpg')] bg-cover bg-center p-1">
-             <div className="rounded-[1.8rem] bg-black/70 p-10 text-center backdrop-blur-md md:p-16">
+          {/* CTA Section (بدون عکس، با گرادیانت) */}
+          <div className="relative mt-24 overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#FF7438]/20 via-[#111315] to-[#111315] p-1">
+             <div className="rounded-[1.8rem] bg-black/40 p-10 text-center backdrop-blur-md md:p-16">
                 <h2 className="text-3xl font-bold md:text-5xl">
                   {isRtl ? "پروژه‌ای در ذهن دارید؟" : "Have a project in mind?"}
                 </h2>

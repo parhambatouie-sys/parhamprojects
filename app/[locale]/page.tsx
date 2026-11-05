@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
@@ -92,11 +93,20 @@ export default async function HomePage({
 
       {/* ============ 1. HERO ============ */}
       <section id="hero" className="relative min-h-[92vh] overflow-hidden px-6 pt-28 pb-12 md:pt-44 md:pb-24">
-        <div className="absolute inset-0 -z-20 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/hero-bg.jpg')" }} />
+        {/* استفاده از next/image با اولویت بالا برای LCP */}
+        <Image
+          src="/hero-bg.jpg"
+          alt="Hero Background"
+          fill
+          priority
+          quality={85}
+          sizes="100vw"
+          className="object-cover object-center -z-20"
+        />
+        
         <div className="absolute inset-0 -z-10 bg-gradient-to-l from-background/95 via-background/55 to-background/15 md:via-background/40 md:to-transparent" />
         <div className="absolute inset-x-0 bottom-0 -z-10 h-56 bg-gradient-to-t from-background via-background/80 to-transparent" />
 
-        {/* نمایش باکس دلار در دسکتاپ فقط برای زبان فارسی */}
         {locale === "fa" && (
           <div className="absolute end-6 top-28 z-20 hidden md:block md:end-10 md:top-32">
             <ExchangeWidget locale={locale} />
@@ -193,15 +203,32 @@ export default async function HomePage({
 
       {/* ============ 5. BIOGRAPHY ============ */}
       <section id="about" className="relative scroll-mt-24 border-t border-border">
-        <div className="hidden md:block absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-70" style={{ backgroundImage: "url('/bio-bg.jpg')" }} />
+        
+        {/* لایه عکس دسکتاپ با next/image */}
+        <div className="hidden md:block absolute inset-0 z-0 relative">
+          <Image
+            src="/bio-bg.jpg"
+            alt="Biography Background"
+            fill
+            quality={75}
+            sizes="100vw"
+            className="object-cover object-center opacity-70"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-[#111315] via-[#111315]/80 to-transparent" />
         </div>
 
         <div className="relative z-10 mx-auto w-full max-w-7xl md:px-6 md:py-32 grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-0 items-end">
           
+          {/* لایه عکس موبایل با next/image */}
           <div className="relative block w-full h-[65vh] md:hidden">
-            <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/bio-bg.jpg')" }} />
+            <Image
+              src="/bio-bg.jpg"
+              alt="Biography Background"
+              fill
+              quality={75}
+              sizes="100vw"
+              className="object-cover object-center"
+            />
             <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background to-transparent" />
             <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/80 to-transparent" />
           </div>

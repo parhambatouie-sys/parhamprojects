@@ -68,13 +68,13 @@ export default async function BlogPage({
             </p>
           </div>
 
-          {/* Featured Post (Huge Editorial) */}
+          {/* Featured Post (بدون عکس شخصی، با گرادیانت ادیتوریال) */}
           <Link
             href={`/${locale}/blog/${featuredPost.slug}`}
-            className="group relative mb-20 block overflow-hidden rounded-[2rem] border border-white/10 md:mb-32"
+            className="group relative mb-20 block overflow-hidden rounded-[2rem] border border-white/10 bg-card md:mb-32"
           >
-            {/* The Image/Gradient Background */}
-            <div className="absolute inset-0 -z-20 bg-cover bg-center bg-no-repeat opacity-60 transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: "url('/bio-bg.jpg')" }} />
+            {/* گرادیانت تیره با هاله نارنجی برای جایگزینی عکس */}
+            <div className="absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#FF7438]/20 via-[#111315] to-[#111315] opacity-90 transition-transform duration-1000 group-hover:scale-105" />
             <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#111315] via-[#111315]/80 to-transparent" />
             
             <div className="flex min-h-[450px] flex-col justify-end p-8 md:min-h-[600px] md:p-16 lg:p-20">
@@ -105,12 +105,10 @@ export default async function BlogPage({
               >
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-[60px_1fr_auto] md:items-center md:gap-10">
                   
-                  {/* Number */}
                   <span className="font-mono text-xs tracking-[0.25em] text-brand md:self-start md:pt-2 md:text-sm">
                     {String(i + 1).padStart(2, "0")}
                   </span>
 
-                  {/* Title & Excerpt */}
                   <div>
                     <h3 className="text-2xl font-bold leading-[1.1] transition-colors group-hover:text-brand md:text-4xl lg:text-5xl">
                       {post.title[locale as "fa" | "en"]}
@@ -120,7 +118,6 @@ export default async function BlogPage({
                     </p>
                   </div>
 
-                  {/* Meta Info */}
                   <div className="flex items-center justify-between gap-4 md:flex-col md:items-end md:gap-3 md:self-start">
                     <span className="text-[10px] font-mono tracking-widest text-muted" dir="ltr">
                       {post.date}
@@ -132,12 +129,10 @@ export default async function BlogPage({
 
                 </div>
 
-                {/* Arrow that appears on hover */}
                 <div className="absolute end-6 top-1/2 hidden -translate-y-1/2 opacity-0 transition-all duration-300 group-hover:opacity-100 md:block">
                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand text-brand-foreground rtl:rotate-180">→</span>
                 </div>
 
-                {/* Orange Sweep Line */}
                 <span className="pointer-events-none absolute bottom-0 start-0 h-px w-0 bg-brand transition-all duration-700 group-hover:w-full" />
               </Link>
             ))}
