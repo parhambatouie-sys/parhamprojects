@@ -2,24 +2,32 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // بررسی اینکه آیا درخواست مربوط به مسیرهای ادمین API است یا خیر
-  if (request.nextUrl.pathname.startsWith('/api/admin')) {
-    // ورسل پس از لاگین موفق، یک کوکی به نام _vercel_jwt تنظیم می‌کند
-    const vercelAuthCookie = request.cookies.get('_vercel_jwt');
-    
-    // اگر کوکی وجود نداشت، یعنی کاربر لاگین نکرده است
-    if (!vercelAuthCookie) {
-      return new NextResponse(
-        JSON.stringify({ error: 'Unauthorized access to admin API' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
+  const basicAuth = request.headers.get('authorization');
+
+  if (basicAuth) {
+    const authValue = basicAuth.split(' ')[1];
+    const [user, pwd] = atob(authValue).split(':');
+
+    // ⚠️ نام کاربری و رمز عبور خود را اینجا تنظیم کنید (این رمز را به خاطر بسپارید)
+    const ADMIN_USER = 'admin';
+    const ADMIN_PASS = 'Parham@12345'; 
+
+    if (user === ADMIN_USER && pwd === ADMIN_PASS) {
+      return NextResponse.next();
     }
   }
-  
-  return NextResponse.next();
+
+  // اگر رمز اشتباه بود یا وارد نشده بود، مرورگر پنجره لاگین را نشان می‌دهد
+  return new NextResponse('Authentication Required', {
+    status: 401,
+    headers: { 'WWW-Authenticate': 'Basic realm="Secure Admin Area"' },
+  });
 }
 
-// فقط برای این مسیرها اجرا شود
+// این مسیرها قفل می‌شوند (پنل ادمین و APIهای ادمین)
 export const config = {
-  matcher: '/api/admin/:path*',
+  matcher: [
+    '/:locale/admin/:path*',
+    '/api/admin/:path*'
+  ],
 };
