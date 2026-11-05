@@ -1,41 +1,40 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import createMiddleware from "next-intl/middleware";
-import { routing } from "./i18n/routing";
-
-const intlMiddleware = createMiddleware(routing);
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const basicAuth = request.headers.get('authorization');
 
-  const isAdminPath = pathname.includes("/admin") && !pathname.includes("/admin/login");
+  if (basicAuth) {
+    const authValue = basicAuth.split(' ')[1];
+    const [user, pwd] = atob(authValue).split(':');
 
-  if (isAdminPath) {
-    const basicAuth = request.headers.get("authorization");
+    // ⚠️ نام کاربری و رمز عبور خود را اینجا تنظیم کنید
+    const ADMIN_USER = 'admin';
+    const ADMIN_PASS = 'Parham@12345'; 
 
-    if (basicAuth) {
-      const authValue = basicAuth.split(" ")[1];
-      const [user, pwd] = atob(authValue).split(":");
-
-      if (
-        user === process.env.BASIC_AUTH_USER &&
-        pwd === process.env.BASIC_AUTH_PASSWORD
-      ) {
-        return intlMiddleware(request);
-      }
+    if (user === ADMIN_USER && pwd === ADMIN_PASS) {
+      return NextResponse.next();
     }
-
-    return new Response("Unauthorized", {
-      status: 401,
-      headers: {
-        "WWW-Authenticate": 'Basic realm="Secure Admin"',
-      },
-    });
   }
 
-  return intlMiddleware(request);
+  // اگر درخواست به API ادمین بود، خطای JSON بده (بدون باز کردن پاپ‌آپ)
+  if (request.nextUrl.pathname.startsWith('/api/admin')) {
+    return new NextResponse(
+      JSON.stringify({ error: 'Unauthorized access to admin API' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // اگر درخواست به صفحات ادمین بود، پنجره لاگین باز کن
+  return new NextResponse('Authentication Required', {
+    status: 401,
+    headers: { 'WWW-Authenticate': 'Basic realm="Secure Admin Area"' },
+  });
 }
 
 export const config = {
-  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
+  matcher: [
+    '/api/admin/:path*',
+    '/:locale/admin/:path*'
+  ],
 };
