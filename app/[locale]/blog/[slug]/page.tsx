@@ -72,62 +72,64 @@ export default async function BlogPostPage({
       
       <Header locale={locale} />
 
-      <main className="min-h-screen pt-32 pb-24 px-6 md:pt-44 md:pb-32">
-        <article className="mx-auto max-w-3xl">
-          {/* دکمه بازگشت */}
+      <main className="min-h-screen pt-32 pb-24 md:pt-44 md:pb-32 relative">
+        <div className="mx-auto max-w-4xl px-6">
+          
           <Link
             href={`/${locale}/blog`}
-            className="mb-10 inline-flex items-center gap-2 text-sm text-muted transition hover:text-brand"
+            className="mb-12 inline-flex items-center gap-2 text-sm font-medium text-brand transition hover:opacity-80"
           >
             <span className={isRtl ? "rotate-180" : ""}>←</span>
             {t("backToBlog")}
           </Link>
 
           {/* هدر مقاله */}
-          <div className="mb-14">
-            <div className="mb-6 flex items-center gap-3">
-              <span className="rounded-full border border-border/50 bg-card px-3 py-1 text-[10px] font-mono tracking-widest text-brand">
+          <div className="mb-16 md:mb-24 text-center">
+            <div className="mb-6 flex items-center justify-center gap-4">
+              <span className="rounded-full border border-brand/30 bg-brand/10 px-4 py-1.5 text-[10px] font-mono tracking-widest text-brand">
                 {post.category[locale as "fa" | "en"]}
               </span>
-              <span className="text-[10px] font-mono tracking-widest text-muted" dir="ltr">
-                {post.date}
-              </span>
             </div>
-            <h1 className="text-3xl font-bold leading-[1.15] tracking-tight md:text-5xl lg:text-6xl">
+            <h1 className="text-4xl font-bold leading-[1.1] tracking-tight md:text-6xl lg:text-7xl">
               {post.title[locale as "fa" | "en"]}
             </h1>
-            <div className="mt-6 flex items-center gap-4 text-sm text-muted border-t border-b border-border py-4">
-              <span className="font-semibold text-foreground">Parham Batouie</span>
-              <span className="h-1 w-1 rounded-full bg-muted" />
+            <div className="mt-8 flex items-center justify-center gap-4 text-[11px] font-mono tracking-widest text-muted">
+              <span className="font-semibold text-foreground uppercase">Parham Batouie</span>
+              <span className="h-1 w-1 rounded-full bg-brand" />
+              <span dir="ltr">{post.date}</span>
+              <span className="h-1 w-1 rounded-full bg-brand" />
               <span>{post.readTime} {t("readTime")}</span>
             </div>
           </div>
 
           {/* متن مقاله */}
-          <div className="prose prose-invert prose-lg max-w-none text-muted leading-[1.8] md:leading-[2]">
+          <div className="prose prose-invert prose-lg max-w-none text-muted leading-[1.9] md:leading-[2]">
             {post.content[locale as "fa" | "en"].split("\n\n").map((paragraph, index) => (
-              <p key={index} className="mb-8 text-base md:text-lg">
+              <p key={index} className="mb-10 text-base md:text-xl font-light">
                 {paragraph}
               </p>
             ))}
           </div>
 
-          {/* بخش دعوت به اقدام (CTA) */}
-          <div className="mt-20 rounded-2xl border border-border bg-card p-8 text-center md:p-12">
-            <h2 className="text-2xl font-bold md:text-3xl">
-              {isRtl ? "پروژه‌ای در ذهن دارید؟" : "Have a project in mind?"}
-            </h2>
-            <p className="mt-3 text-muted">
-              {isRtl ? "بیایید درباره آن صحبت کنیم." : "Let's talk about it."}
-            </p>
-            <Link
-              href={`/${locale}/order`}
-              className="mt-8 inline-block rounded-md bg-brand px-8 py-3.5 text-sm font-semibold text-brand-foreground transition hover:opacity-90"
-            >
-              {isRtl ? "شروع یک پروژه" : "Start a Project"}
-            </Link>
+          {/* بخش CTA */}
+          <div className="mt-24 rounded-[2rem] border border-white/10 bg-[url('/bio-bg.jpg')] bg-cover bg-center p-1">
+             <div className="rounded-[1.8rem] bg-black/70 p-10 text-center backdrop-blur-md md:p-16">
+                <h2 className="text-3xl font-bold md:text-5xl">
+                  {isRtl ? "پروژه‌ای در ذهن دارید؟" : "Have a project in mind?"}
+                </h2>
+                <p className="mt-4 text-base text-muted">
+                  {isRtl ? "بیایید درباره آن صحبت کنیم." : "Let's talk about it."}
+                </p>
+                <Link
+                  href={`/${locale}/order`}
+                  className="mt-10 inline-block rounded-md bg-brand px-10 py-4 text-sm font-semibold text-brand-foreground transition hover:opacity-90"
+                >
+                  {isRtl ? "شروع یک پروژه" : "Start a Project"}
+                </Link>
+             </div>
           </div>
-        </article>
+
+        </div>
       </main>
 
       <Footer locale={locale} />
