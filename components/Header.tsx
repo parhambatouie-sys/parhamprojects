@@ -45,11 +45,13 @@ export async function Header({ locale }: { locale: string }) {
         </nav>
 
         <div className="flex items-center gap-2 md:gap-3">
-          <div className="block md:hidden">
-            <ExchangeWidget locale={locale} />
-          </div>
+          {/* نمایش باکس دلار در موبایل فقط برای زبان فارسی */}
+          {locale === "fa" && (
+            <div className="block md:hidden">
+              <ExchangeWidget locale={locale} />
+            </div>
+          )}
 
-          {/* دکمه شیشه‌ای تغییر زبان */}
           <div className="hidden md:block">
             <LanguageSwitcher locale={locale} />
           </div>

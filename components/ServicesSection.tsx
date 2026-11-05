@@ -59,7 +59,7 @@ export function ServicesSection({
     <section
       ref={sectionRef}
       id="services"
-      className="relative scroll-mt-24 overflow-hidden border-t border-border py-16 md:py-32"
+      className="relative scroll-mt-24 overflow-hidden border-t border-border py-24 md:py-32"
     >
       <div className="pointer-events-none absolute inset-0 -z-0" aria-hidden="true">
         <div className="absolute inset-0 mx-auto max-w-7xl px-6">
@@ -81,8 +81,8 @@ export function ServicesSection({
           <span>{label}</span>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-end md:gap-20">
-          <h2 className="text-4xl font-bold leading-[0.95] tracking-tight md:text-7xl lg:text-8xl">
+        <div className="grid gap-10 md:grid-cols-[1fr_auto] md:items-end md:gap-20">
+          <h2 className="text-5xl font-bold leading-[0.95] tracking-tight md:text-7xl lg:text-8xl">
             {title}
           </h2>
           <p className="max-w-xs text-sm leading-relaxed text-muted md:pb-3 md:text-base">
@@ -90,46 +90,47 @@ export function ServicesSection({
           </p>
         </div>
 
-        <div className="mt-12 md:mt-28">
+        <div className="mt-20 md:mt-28">
           {services.map((s, i) => (
             <Link
               key={s.key}
               href={ctaHref}
               data-reveal
-              className="reveal-row group relative block border-t border-border py-8 transition-colors duration-500 hover:bg-white/[0.015] md:py-14 lg:py-16"
+              className="reveal-row group relative block border-t border-border py-10 transition-colors duration-500 hover:bg-white/[0.015] md:py-14 lg:py-16"
             >
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-[60px_1fr_auto] md:items-center md:gap-10">
-                <span className="font-mono text-[10px] tracking-[0.25em] text-brand md:text-muted md:self-start md:pt-2 md:text-sm">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-[60px_1fr_auto] md:items-center md:gap-10">
+                <span className="font-mono text-xs tracking-[0.25em] text-muted transition-colors duration-500 group-hover:text-brand md:self-start md:pt-2 md:text-sm">
                   {String(i + 1).padStart(2, "0")}
                 </span>
 
                 <div>
-                  <h3 className="stroke-heading text-2xl font-bold leading-[1.1] tracking-tight md:text-5xl lg:text-6xl">
+                  <h3 className="stroke-heading text-3xl font-bold leading-[1.08] tracking-tight md:text-5xl lg:text-6xl">
                     {s.title}
                   </h3>
-                  <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted md:mt-5 md:text-base">
+                  <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted md:mt-5 md:text-base">
                     {s.description}
                   </p>
                 </div>
 
-                <div className="col-span-2 mt-1 flex items-center justify-between gap-4 md:col-span-1 md:mt-0 md:justify-start md:self-start">
-                  <div className="flex items-baseline gap-2 md:gap-3">
+                <div className="col-span-2 flex items-center justify-between gap-4 border-t border-border/50 pt-4 md:col-span-1 md:mt-0 md:justify-start md:border-0 md:pt-0 md:self-start">
+                  <div className="flex items-baseline gap-3">
                     <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-muted">
                       {s.isInquiry ? inquiryLabel : s.priceNote}
                     </span>
                     <span
-                      className="text-xl font-bold leading-none text-brand md:text-2xl lg:text-3xl"
+                      className="text-2xl font-bold leading-none text-brand md:text-3xl"
                       dir="ltr"
                     >
                       {s.price}
                     </span>
-                    {s.priceToman && (
-                      <span className="text-[10px] leading-none text-muted md:text-xs" dir="ltr">
+                    {/* نمایش معادل تومانی فقط در زبان فارسی */}
+                    {locale === "fa" && s.priceToman && (
+                      <span className="text-xs leading-none text-muted" dir="ltr">
                         {s.priceToman}
                       </span>
                     )}
                   </div>
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border/60 bg-white/[0.02] text-xs text-muted transition-all duration-300 group-hover:border-brand group-hover:bg-brand group-hover:text-brand-foreground md:h-11 md:w-11 md:text-sm">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border/60 bg-white/[0.02] text-sm text-muted transition-all duration-300 group-hover:border-brand group-hover:bg-brand group-hover:text-brand-foreground">
                     <span className="rtl:rotate-180">→</span>
                   </div>
                 </div>
@@ -141,11 +142,11 @@ export function ServicesSection({
           <div className="border-t border-border" />
         </div>
 
-        <div className="mt-12 flex flex-col items-start justify-between gap-6 md:mt-16 md:flex-row md:items-center">
+        <div className="mt-16 flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
           <p className="max-w-md text-sm text-muted">{ctaNote}</p>
           <Link
             href={ctaHref}
-            className="group inline-flex w-full items-center justify-center gap-3 rounded-md bg-brand px-6 py-4 text-sm font-semibold text-brand-foreground transition hover:opacity-90 md:w-auto md:py-3"
+            className="group inline-flex items-center gap-3 rounded-md bg-brand px-6 py-3 text-sm font-semibold text-brand-foreground transition hover:opacity-90"
           >
             {ctaText}
             <span className="transition group-hover:translate-x-1 rtl:rotate-180">

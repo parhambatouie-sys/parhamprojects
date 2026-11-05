@@ -96,9 +96,12 @@ export default async function HomePage({
         <div className="absolute inset-0 -z-10 bg-gradient-to-l from-background/95 via-background/55 to-background/15 md:via-background/40 md:to-transparent" />
         <div className="absolute inset-x-0 bottom-0 -z-10 h-56 bg-gradient-to-t from-background via-background/80 to-transparent" />
 
-        <div className="absolute end-6 top-28 z-20 hidden md:block md:end-10 md:top-32">
-          <ExchangeWidget locale={locale} />
-        </div>
+        {/* نمایش باکس دلار در دسکتاپ فقط برای زبان فارسی */}
+        {locale === "fa" && (
+          <div className="absolute end-6 top-28 z-20 hidden md:block md:end-10 md:top-32">
+            <ExchangeWidget locale={locale} />
+          </div>
+        )}
 
         <div className="relative mx-auto flex min-h-[75vh] max-w-7xl flex-col justify-end pb-0 md:min-h-[70vh] md:justify-center md:pb-0">
           <div>
