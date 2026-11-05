@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
@@ -18,6 +18,12 @@ const vazirmatn = localFont({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
@@ -29,19 +35,27 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Metadata" });
-  
+  const baseUrl = "https://parhamprojects.vercel.app";
+
   return {
     title: t("title"),
     description: t("description"),
-    // تنظیمات Open Graph برای شبکه‌های اجتماعی
+    alternates: {
+      canonical: `${baseUrl}/${locale}`,
+      languages: {
+        "fa-IR": `${baseUrl}/fa`,
+        "en": `${baseUrl}/en`,
+        "x-default": `${baseUrl}/en`,
+      },
+    },
     openGraph: {
       title: t("title"),
       description: t("description"),
-      url: `https://parhambatouie.com/${locale}`,
+      url: `${baseUrl}/${locale}`,
       siteName: "Parham Batouie",
       images: [
         {
-          url: "/og-image.jpg", // یک عکس 1200x630 در پوشه public بگذارید
+          url: "/og-image.png",
           width: 1200,
           height: 630,
           alt: "Parham Batouie Portfolio",
@@ -50,12 +64,11 @@ export async function generateMetadata({
       locale: locale === "fa" ? "fa_IR" : "en_US",
       type: "website",
     },
-    // تنظیمات توییتر (X)
     twitter: {
       card: "summary_large_image",
       title: t("title"),
       description: t("description"),
-      images: ["/og-image.jpg"],
+      images: ["/og-image.png"],
     },
   };
 }
@@ -75,12 +88,30 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
 
+  // اسکیمای معرفی شما به عنوان یک شخص/متخصص به گوگل
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: "Parham Batouie",
+    url: "https://parhamprojects.vercel.app",
+    jobTitle: "Web Designer & Developer",
+    sameAs: [
+      "https://github.com/parhambatouie-sys"
+    ]
+  };
+
   return (
     <html
       lang={locale}
       dir={locale === "fa" ? "rtl" : "ltr"}
       className={vazirmatn.variable}
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body>
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
       </body>

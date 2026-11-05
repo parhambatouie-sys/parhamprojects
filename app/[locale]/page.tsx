@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { Header } from "@/components/Header";
@@ -9,6 +10,26 @@ import { ContactSection } from "@/components/ContactSection";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const baseUrl = "https://parhamprojects.vercel.app";
+  
+  return {
+    alternates: {
+      canonical: `${baseUrl}/${locale}`,
+      languages: {
+        "fa-IR": `${baseUrl}/fa`,
+        "en": `${baseUrl}/en`,
+        "x-default": `${baseUrl}/en`,
+      },
+    },
+  };
 }
 
 function SectionLabel({ num, en }: { num?: string; en: string }) {
@@ -168,33 +189,22 @@ export default async function HomePage({
       </section>
 
       {/* ============ 5. BIOGRAPHY ============ */}
-      {/* مطمئن شو رنگ پس‌زمینه توپر (bg-background) اینجا نباشه */}
       <section id="about" className="relative scroll-mt-24 border-t border-border">
-        
-        {/* لایه عکس دسکتاپ */}
         <div className="hidden md:block absolute inset-0 z-0">
-          <div 
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-70" 
-            style={{ backgroundImage: "url('/bio-bg.jpg')" }} 
-          />
+          <div className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-70" style={{ backgroundImage: "url('/bio-bg.jpg')" }} />
           <div className="absolute inset-0 bg-gradient-to-t from-[#111315] via-[#111315]/80 to-transparent" />
         </div>
 
         <div className="relative z-10 mx-auto w-full max-w-7xl md:px-6 md:py-32 grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-0 items-end">
           
-          {/* لایه عکس موبایل */}
           <div className="relative block w-full h-[65vh] md:hidden">
-            <div 
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: "url('/bio-bg.jpg')" }}
-            />
+            <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/bio-bg.jpg')" }} />
             <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background to-transparent" />
             <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/80 to-transparent" />
           </div>
 
           <div className="hidden md:block"></div>
 
-          {/* متن */}
           <div className="flex flex-col items-start text-start max-w-xl px-6 py-16 md:px-0 md:py-0 md:mt-48">
             <div className="mb-6 flex items-center justify-start gap-3 text-[10px] font-mono uppercase tracking-[0.25em] text-muted">
               <span className="text-brand">05</span>
@@ -294,7 +304,6 @@ export default async function HomePage({
 
       {/* ============ 8. CONTACT ============ */}
       <ContactSection locale={locale} />
-
       <Footer locale={locale} />
     </>
   );

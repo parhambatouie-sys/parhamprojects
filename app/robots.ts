@@ -1,14 +1,9 @@
 import { MetadataRoute } from 'next'
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = 'https://parhambatouie.com' // دامنه نهایی خود را اینجا بگذارید
-
+  const baseUrl = 'https://parhamprojects.vercel.app'
   return {
-    rules: {
-      userAgent: '*',
-      allow: '/',
-      disallow: '/admin/', // به گوگل می‌گوییم پنل ادمین را ایندکس نکند
-    },
+    rules: { userAgent: '*', allow: '/', disallow: ['/admin/', '/fa/admin/', '/en/admin/'] },
     sitemap: `${baseUrl}/sitemap.xml`,
   }
 }
