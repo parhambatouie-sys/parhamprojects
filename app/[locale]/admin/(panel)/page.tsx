@@ -16,11 +16,18 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // تغییر مسیر fetch به مسیر امن ادمین
-    fetch("/api/admin/orders")
-      .then((res) => res.json())
+    // تغییر مهم: اضافه شدن credentials برای ارسال اطلاعات لاگین
+    fetch("/api/admin/orders", { credentials: "include" })
+      .then((res) => {
+        if (!res.ok) throw new Error("Unauthorized");
+        return res.json();
+      })
       .then((data) => {
         if (data.orders) setOrders(data.orders);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
         setLoading(false);
       });
   }, []);

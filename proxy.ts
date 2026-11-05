@@ -14,7 +14,7 @@ export function proxy(request: NextRequest) {
       const [user, pwd] = decoded.split(':');
       
       // ⚠️ نام کاربری و رمز عبور
-      if (user === 'admin' && pwd === 'Parham@12345') {
+      if (user === 'batouie' && pwd === 'parhambatouiie832004') {
         isAuthorized = true;
       }
     } catch (e) {
