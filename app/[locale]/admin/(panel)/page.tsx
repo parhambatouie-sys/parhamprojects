@@ -16,7 +16,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/orders")
+    // تغییر مسیر fetch به مسیر امن ادمین
+    fetch("/api/admin/orders")
       .then((res) => res.json())
       .then((data) => {
         if (data.orders) setOrders(data.orders);
