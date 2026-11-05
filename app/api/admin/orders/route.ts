@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 
+// جلوگیری از کش شدن و اجبار به بررسی امنیت در هر درخواست
+export const dynamic = 'force-dynamic';
+
 // خواندن سفارش‌ها (فقط برای پنل ادمین)
 export async function GET() {
   try {

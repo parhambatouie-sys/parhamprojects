@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
     const authValue = basicAuth.split(' ')[1];
     const [user, pwd] = atob(authValue).split(':');
 
-    // ⚠️ نام کاربری و رمز عبور خود را اینجا تنظیم کنید (این رمز را به خاطر بسپارید)
+    // ⚠️ نام کاربری و رمز عبور شما
     const ADMIN_USER = 'admin';
     const ADMIN_PASS = 'Parham@12345'; 
 
@@ -27,7 +27,7 @@ export function middleware(request: NextRequest) {
 // این مسیرها قفل می‌شوند (پنل ادمین و APIهای ادمین)
 export const config = {
   matcher: [
-    '/:locale/admin/:path*',
-    '/api/admin/:path*'
+    '/api/admin/:path*',
+    '/:locale/admin/:path*'
   ],
 };
