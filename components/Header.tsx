@@ -49,11 +49,10 @@ export async function Header({ locale }: { locale: string }) {
             <ExchangeWidget locale={locale} />
           </div>
 
-          <LanguageSwitcher
-            locale={locale}
-            label={t("switchLanguage")}
-            className="hidden md:inline-flex group relative items-center gap-2 rounded-lg border border-brand/50 bg-brand/10 px-3.5 py-2 font-mono text-[11px] font-bold uppercase tracking-wider text-brand transition-all duration-300 hover:border-brand hover:bg-brand hover:text-brand-foreground md:px-4 md:py-2.5"
-          />
+          {/* دکمه شیشه‌ای تغییر زبان */}
+          <div className="hidden md:block">
+            <LanguageSwitcher locale={locale} />
+          </div>
 
           <Link
             href={`/${locale}/order`}
@@ -66,7 +65,7 @@ export async function Header({ locale }: { locale: string }) {
             locale={locale}
             navItems={navItems}
             switchLanguage={t("switchLanguage")}
-            otherLocale={locale === "fa" ? "en" : "fa"} // این برای منوی موبایل هنوز ساده است
+            otherLocale={locale === "fa" ? "en" : "fa"} 
             orderLabel={t("order")}
           />
         </div>
