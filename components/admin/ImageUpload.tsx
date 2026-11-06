@@ -9,7 +9,6 @@ export function ImageUpload({ onUpload }: { onUpload: (url: string) => void }) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // هشدار حجم فایل (محدودیت ورسل 4.5 مگابایت است)
     if (file.size > 4.5 * 1024 * 1024) {
       alert("حجم عکس نباید بیشتر از ۴.۵ مگابایت باشد. لطفاً عکس را فشرده کنید.");
       return;
@@ -23,19 +22,27 @@ export function ImageUpload({ onUpload }: { onUpload: (url: string) => void }) {
       const res = await fetch("/api/admin/upload", {
         method: "POST",
         body: formData,
-        credentials: "include", // <--- این خط اضافه شد تا کوکی امنیتی ارسال شود
+        credentials: "include",
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Upload failed");
-      }
+      // خواندن پاسخ به صورت متن (برای دیدن خطای دقیق اگر JSON نبود)
+      const text = await res.text();
       
+      if (!res.ok) {
+        throw new Error(`خطای سرور (${res.status}): ${text.substring(0, 100)}`);
+      }
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        throw new Error("پاسخ سرور فرمت JSON ندارد.");
+      }
+
       onUpload(data.url);
     } catch (error: any) {
       console.error("Upload Error Details:", error);
-      alert(`خطا در آپلود تصویر: ${error.message}`);
+      alert(`خطا در آپلود تصویر:\n${error.message}`);
     } finally {
       setUploading(false);
     }
