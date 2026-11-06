@@ -19,8 +19,8 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  useEffect(() => {
-    // تغییر مهم: اضافه شدن credentials برای ارسال اطلاعات لاگین
+  const fetchOrders = () => {
+    setLoading(true);
     fetch("/api/admin/orders", { credentials: "include" })
       .then((res) => {
         if (!res.ok) throw new Error("Unauthorized");
@@ -34,7 +34,39 @@ export default function AdminOrdersPage() {
         console.error(err);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchOrders();
   }, []);
+
+  // تابع حذف تک سفارش
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("آیا از حذف این سفارش مطمئن هستید؟")) return;
+    try {
+      const res = await fetch(`/api/admin/orders?id=${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (res.ok) fetchOrders(); // رفرش لیست بعد از حذف
+    } catch (err) {
+      alert("خطا در حذف سفارش");
+    }
+  };
+
+  // تابع حذف کل سفارش‌ها
+  const handleDeleteAll = async () => {
+    if (!window.confirm("⚠️ هشدار! آیا از حذف تمام سفارش‌ها مطمئن هستید؟ این عملیات غیرقابل بازگشت است.")) return;
+    try {
+      const res = await fetch(`/api/admin/orders?id=all`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (res.ok) fetchOrders();
+    } catch (err) {
+      alert("خطا در پاکسازی سفارش‌ها");
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -50,9 +82,19 @@ export default function AdminOrdersPage() {
 
   return (
     <div className="space-y-6 md:space-y-8">
-      <header>
-        <h1 className="text-2xl font-bold text-foreground md:text-3xl">مدیریت سفارش‌ها</h1>
-        <p className="mt-2 text-xs text-muted md:text-sm">لیست سفارش‌های واقعی ثبت شده در دیتابیس.</p>
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground md:text-3xl">مدیریت سفارش‌ها</h1>
+          <p className="mt-2 text-xs text-muted md:text-sm">لیست سفارش‌های واقعی ثبت شده در دیتابیس.</p>
+        </div>
+        {orders.length > 0 && (
+          <button
+            onClick={handleDeleteAll}
+            className="rounded-md border border-red-500/50 bg-red-500/10 px-4 py-2 text-xs font-medium text-red-400 transition hover:bg-red-500/20 md:text-sm"
+          >
+            پاکسازی کل سفارش‌ها
+          </button>
+        )}
       </header>
 
       <div className="rounded-xl border border-border bg-[#292D31] shadow-sm overflow-hidden">
@@ -79,12 +121,18 @@ export default function AdminOrdersPage() {
                     <td className="px-4 py-4 text-xs text-muted md:px-6" dir="ltr">{order.contact}</td>
                     <td className="px-4 py-4 text-xs text-muted md:px-6">{order.project_type}</td>
                     <td className="px-4 py-4 md:px-6">{getStatusBadge(order.status)}</td>
-                    <td className="px-4 py-4 text-left md:px-6">
+                    <td className="px-4 py-4 text-left md:px-6 flex items-center gap-3">
                       <button 
                         onClick={() => setSelectedOrder(order)}
                         className="whitespace-nowrap text-xs text-brand hover:underline md:text-sm"
                       >
                         مشاهده
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(order.id)}
+                        className="whitespace-nowrap text-xs text-red-400 hover:underline md:text-sm"
+                      >
+                        حذف
                       </button>
                     </td>
                   </tr>
