@@ -1,13 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, ChangeEvent } from "react";
 
 export function ImageUpload({ onUpload }: { onUpload: (url: string) => void }) {
   const [uploading, setUploading] = useState(false);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // هشدار حجم فایل (محدودیت ورسل 4.5 مگابایت است)
+    if (file.size > 4.5 * 1024 * 1024) {
+      alert("حجم عکس نباید بیشتر از ۴.۵ مگابایت باشد. لطفاً عکس را فشرده کنید.");
+      return;
+    }
 
     setUploading(true);
     const formData = new FormData();
@@ -17,14 +23,19 @@ export function ImageUpload({ onUpload }: { onUpload: (url: string) => void }) {
       const res = await fetch("/api/admin/upload", {
         method: "POST",
         body: formData,
+        credentials: "include", // <--- این خط اضافه شد تا کوکی امنیتی ارسال شود
       });
 
-      if (!res.ok) throw new Error("Upload failed");
-      
       const data = await res.json();
-      onUpload(data.url); // ارسال لینک عکس آپلود شده به فرم
-    } catch (error) {
-      alert("خطا در آپلود تصویر");
+
+      if (!res.ok) {
+        throw new Error(data.error || "Upload failed");
+      }
+      
+      onUpload(data.url);
+    } catch (error: any) {
+      console.error("Upload Error Details:", error);
+      alert(`خطا در آپلود تصویر: ${error.message}`);
     } finally {
       setUploading(false);
     }
