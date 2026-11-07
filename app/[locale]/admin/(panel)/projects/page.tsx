@@ -99,7 +99,8 @@ export default function AdminProjectsPage() {
         setIsModalOpen(false);
         fetchProjects(); // رفرش لیست
       } else {
-        alert("خطا در ذخیره پروژه");
+        const errData = await res.json().catch(() => ({}));
+        alert(`خطا در ذخیره پروژه: ${errData.error || "خطای نامشخص"}`);
       }
     } catch (err) {
       alert("خطای شبکه");
