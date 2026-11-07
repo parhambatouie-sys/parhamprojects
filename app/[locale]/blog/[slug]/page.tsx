@@ -123,42 +123,54 @@ export default async function BlogPostPage({
             </div>
           )}
 
-          {/* Content (Minimal & Readable) */}
-          <div className="prose prose-invert prose-lg max-w-none text-muted leading-[2] md:leading-[2.3]">
-            {post.content.split("\n\n").map((paragraph: string, index: number) => {
-              // اگر پاراگراف با ## شروع شده بود، آن را به عنوان تیتر نمایش بده
-              if (paragraph.trim().startsWith("## ")) {
+          {/* Content Container (relative for signature) */}
+          <div className="relative">
+            <div className="prose prose-invert prose-lg max-w-none text-muted leading-[2] md:leading-[2.3]">
+              {post.content.split("\n\n").map((paragraph: string, index: number) => {
+                if (paragraph.trim().startsWith("## ")) {
+                  return (
+                    <h2 key={index} className="mt-16 mb-6 text-2xl font-bold text-foreground md:text-3xl">
+                      {paragraph.replace("## ", "")}
+                    </h2>
+                  );
+                }
                 return (
-                  <h2 key={index} className="mt-16 mb-6 text-2xl font-bold text-foreground md:text-3xl">
-                    {paragraph.replace("## ", "")}
-                  </h2>
+                  <p key={index} className="mb-8 text-base md:text-lg font-light whitespace-pre-wrap">
+                    {paragraph}
+                  </p>
                 );
-              }
-              return (
-                <p key={index} className="mb-8 text-base md:text-lg font-light whitespace-pre-wrap">
-                  {paragraph}
-                </p>
-              );
-            })}
+              })}
+            </div>
+
+            {/* Signature Overlay at the bottom of the content */}
+            <div className="pointer-events-none absolute bottom-0 end-0 opacity-20 mix-blend-screen pb-4 pe-4 md:pb-8 md:pe-8">
+              <div
+                className="signature-mask h-24 w-48 md:h-32 md:w-64"
+                style={{
+                  maskPosition: isRtl ? "right center" : "left center",
+                  WebkitMaskPosition: isRtl ? "right center" : "left center",
+                }}
+              />
+            </div>
           </div>
 
-          {/* CTA Section */}
-          <div className="relative mt-32 overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#FF7438]/20 via-[#111315] to-[#111315] p-1">
-             <div className="rounded-[1.8rem] bg-black/40 p-10 text-center backdrop-blur-md md:p-16">
-                <h2 className="text-3xl font-bold md:text-4xl lg:text-5xl">
-                  {isRtl ? "پروژه‌ای در ذهن دارید؟" : "Have a project in mind?"}
-                </h2>
-                <p className="mt-4 text-base text-muted">
-                  {isRtl ? "بیایید درباره آن صحبت کنیم و ایده شما را به واقعیت تبدیل کنیم." : "Let's talk about it and turn your idea into reality."}
-                </p>
-                <Link
-                  href={`/${locale}/order`}
-                  className="mt-8 inline-flex items-center justify-center gap-3 rounded-md bg-brand px-8 py-4 text-sm font-semibold text-brand-foreground transition hover:opacity-90"
-                >
-                  {isRtl ? "شروع یک پروژه" : "Start a Project"}
-                  <span className="rtl:rotate-180">→</span>
-                </Link>
-             </div>
+          {/* Minimal CTA Section */}
+          <div className="mt-32 pt-10 border-t border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-12">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground md:text-3xl">
+                {isRtl ? "پروژه‌ای در ذهن دارید؟" : "Have a project in mind?"}
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted md:text-base">
+                {isRtl ? "بیایید درباره آن صحبت کنیم و ایده شما را به واقعیت تبدیل کنیم." : "Let's talk about it and turn your idea into reality."}
+              </p>
+            </div>
+            <Link
+              href={`/${locale}/order`}
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-brand px-8 py-3.5 text-sm font-semibold text-brand-foreground transition hover:opacity-90"
+            >
+              {isRtl ? "شروع یک پروژه" : "Start a Project"}
+              <span className="rtl:rotate-180 text-lg leading-none">→</span>
+            </Link>
           </div>
 
         </div>
