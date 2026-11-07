@@ -5,10 +5,10 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // تغییر نوع ستون به TEXT برای پذیرش عکس‌های طولانی
-    await query(`ALTER TABLE projects ALTER COLUMN image_url TYPE TEXT;`);
-    return NextResponse.json({ success: true, message: "✅ ستون عکس با موفقیت به TEXT تغییر یافت." });
+    // اضافه کردن ستون زبان به جدول (اگر از قبل نبود)
+    await query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS locale VARCHAR(5) DEFAULT 'fa';`);
+    return NextResponse.json({ success: true, message: "✅ ستون زبان (locale) با موفقیت به دیتابیس اضافه شد." });
   } catch (error: any) {
-    return NextResponse.json({ success: true, message: "ستون از قبل TEXT است." });
+    return NextResponse.json({ success: true, message: "ستون از قبل وجود دارد." });
   }
 }
