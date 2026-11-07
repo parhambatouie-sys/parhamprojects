@@ -10,13 +10,14 @@ export async function Footer({ locale }: { locale: string }) {
     { href: `/${locale}`, label: tNav("home") },
     { href: `/${locale}#services`, label: tNav("services") },
     { href: `/${locale}#work`, label: tNav("work") },
+    { href: `/${locale}/blog`, label: tNav("blog") },
     { href: `/${locale}#about`, label: tNav("about") },
     { href: `/${locale}#contact`, label: tNav("contact") },
   ];
 
   return (
-    <footer className="relative border-t border-border bg-background px-6 py-12 md:py-16">
-      <div className="mx-auto flex max-w-7xl flex-col items-center gap-10">
+    <footer className="relative border-t border-border bg-background px-4 py-10 md:px-6 md:py-16">
+      <div className="mx-auto flex max-w-7xl flex-col items-center gap-8 md:gap-10">
         
         {/* Top Row: Signature & Navigation */}
         <div className="flex w-full flex-col items-center justify-between gap-8 lg:flex-row lg:gap-8">
@@ -24,19 +25,19 @@ export async function Footer({ locale }: { locale: string }) {
           {/* Signature & Tagline */}
           <Link href={`/${locale}`} className="group relative flex shrink-0 items-center justify-center">
             <div
-              className="signature-mask h-28 w-72 opacity-60 transition-opacity duration-300 group-hover:opacity-100 md:h-36 md:w-96 lg:h-40 lg:w-[420px]"
+              className="signature-mask h-24 w-64 opacity-60 transition-opacity duration-300 group-hover:opacity-100 md:h-36 md:w-96 lg:h-40 lg:w-[420px]"
               style={{
                 maskPosition: isRtl ? "right center" : "left center",
                 WebkitMaskPosition: isRtl ? "right center" : "left center",
               }}
             />
-            <span className="absolute font-mono text-[10px] uppercase tracking-[0.25em] text-foreground md:text-xs">
+            <span className="absolute font-mono text-[9px] uppercase tracking-[0.25em] text-foreground md:text-xs">
               {t("tagline")}
             </span>
           </Link>
 
           {/* Navigation Links (Horizontal on Mobile, Centered) */}
-          <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm md:gap-8 lg:justify-end">
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3 text-xs md:gap-8 md:text-sm lg:justify-end">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -53,7 +54,7 @@ export async function Footer({ locale }: { locale: string }) {
 
         {/* Bottom Row: Copyright Text */}
         <div className="w-full border-t border-border/50 pt-6 mt-2">
-          <p className="text-center font-mono text-[10px] tracking-widest text-muted md:text-xs">
+          <p className="text-center font-mono text-[9px] tracking-widest text-muted md:text-xs">
             {t("rights")}
           </p>
         </div>

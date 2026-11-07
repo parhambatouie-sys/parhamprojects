@@ -10,7 +10,6 @@ import { ExchangeWidget } from "@/components/ExchangeWidget";
 import { ContactSection } from "@/components/ContactSection";
 import { query } from "@/lib/db";
 
-// جلوگیری از کش شدن صفحه اصلی برای نمایش فوری تغییرات دیتابیس
 export const dynamic = 'force-dynamic';
 
 export function generateStaticParams() {
@@ -39,7 +38,7 @@ export async function generateMetadata({
 
 function SectionLabel({ num, en }: { num?: string; en: string }) {
   return (
-    <div className="mb-10 flex items-center gap-3 text-[10px] font-mono uppercase tracking-[0.25em] text-muted">
+    <div className="mb-8 flex items-center gap-3 text-[10px] font-mono uppercase tracking-[0.25em] text-muted md:mb-10">
       {num && (
         <>
           <span className="text-brand">{num}</span>
@@ -55,7 +54,7 @@ function SectionLabel({ num, en }: { num?: string; en: string }) {
 function SectionDecoration({ num }: { num: string }) {
   return (
     <div className="pointer-events-none absolute inset-0 -z-0 overflow-hidden" aria-hidden="true">
-      <div className="absolute inset-0 mx-auto max-w-7xl px-6">
+      <div className="absolute inset-0 mx-auto max-w-7xl px-4 md:px-6">
         <div className="grid h-full grid-cols-4">
           <div className="border-e border-border/40" />
           <div className="border-e border-border/40" />
@@ -63,7 +62,7 @@ function SectionDecoration({ num }: { num: string }) {
           <div />
         </div>
       </div>
-      <div className="absolute -top-12 start-4 select-none font-mono text-[200px] font-black leading-none tracking-tighter text-foreground/[0.025] md:-top-20 md:start-8 md:text-[360px] lg:text-[460px]">
+      <div className="absolute -top-12 start-4 select-none font-mono text-[150px] font-black leading-none tracking-tighter text-foreground/[0.025] md:-top-20 md:start-8 md:text-[360px] lg:text-[460px]">
         {num}
       </div>
     </div>
@@ -78,7 +77,6 @@ export default async function HomePage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  // ۱. دریافت نمونه‌کارها از دیتابیس برای زبان فعلی
   let projects = [];
   try {
     const result = await query(
@@ -90,7 +88,6 @@ export default async function HomePage({
     console.error("Failed to fetch projects:", error);
   }
 
-  // ۲. دریافت خدمات از دیتابیس برای زبان فعلی
   let dbServices = [];
   try {
     const result = await query(
@@ -118,8 +115,8 @@ export default async function HomePage({
     <>
       <Header locale={locale} />
 
-      {/* ============ 1. HERO ============ */}
-      <section id="hero" className="relative min-h-[92vh] overflow-hidden px-6 pt-28 pb-12 md:pt-44 md:pb-24">
+      {/* ============ 1. بخش هیرو (Hero) ============ */}
+      <section id="hero" className="relative min-h-[85vh] overflow-hidden px-4 pt-24 pb-12 md:min-h-[92vh] md:px-6 md:pt-44 md:pb-24">
         <Image
           src="/hero-bg.jpg"
           alt="Hero Background"
@@ -134,29 +131,29 @@ export default async function HomePage({
         <div className="absolute inset-x-0 bottom-0 -z-10 h-56 bg-gradient-to-t from-background via-background/80 to-transparent" />
 
         {locale === "fa" && (
-          <div className="absolute end-6 top-28 z-20 hidden md:block md:end-10 md:top-32">
+          <div className="absolute end-4 top-24 z-20 hidden md:block md:end-10 md:top-32">
             <ExchangeWidget locale={locale} />
           </div>
         )}
 
-        <div className="relative mx-auto flex min-h-[75vh] max-w-7xl flex-col justify-end pb-0 md:min-h-[70vh] md:justify-center md:pb-0">
+        <div className="relative mx-auto flex min-h-[70vh] max-w-7xl flex-col justify-end pb-0 md:min-h-[70vh] md:justify-center md:pb-0">
           <div>
             <SectionLabel num="01" en="INTRO" />
 
             <div className="mt-6 flex flex-wrap gap-3 md:mt-32">
-              <Link href="#services" className="rounded-md bg-brand px-7 py-3.5 text-sm font-semibold text-brand-foreground transition hover:opacity-90">
+              <Link href="#services" className="rounded-md bg-brand px-6 py-3 text-sm font-semibold text-brand-foreground transition hover:opacity-90 md:px-7 md:py-3.5">
                 {tHero("viewServices")}
               </Link>
-              <Link href="#about" className="rounded-md border border-border bg-background/30 px-7 py-3.5 text-sm font-semibold backdrop-blur-sm transition hover:border-brand/40">
+              <Link href="#about" className="rounded-md border border-border bg-background/30 px-6 py-3 text-sm font-semibold backdrop-blur-sm transition hover:border-brand/40 md:px-7 md:py-3.5">
                 {tHero("ctaSecondary")}
               </Link>
             </div>
 
-            <h1 className="mt-8 text-[clamp(2rem,4vw,3.5rem)] font-bold leading-[1.15] tracking-tight md:mt-14 md:whitespace-nowrap">
+            <h1 className="mt-8 text-[clamp(1.8rem,4vw,3.5rem)] font-bold leading-[1.15] tracking-tight md:mt-14 md:whitespace-nowrap">
               {tHero.rich("title", { hl: (chunks) => <span className="stroke-heading-word">{chunks}</span> })}
             </h1>
 
-            <p className="mt-4 text-base font-medium text-foreground md:mt-5 md:text-lg">
+            <p className="mt-4 text-sm font-medium text-foreground md:mt-5 md:text-lg">
               {tHero("tagline")}
             </p>
 
@@ -169,7 +166,7 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* ============ 2. SERVICES ============ */}
+      {/* ============ 2. بخش خدمات (Services) ============ */}
       <ServicesSection
         locale={locale}
         label="SERVICES"
@@ -191,7 +188,7 @@ export default async function HomePage({
               priceToman: s.price_toman || "",
               isInquiry: s.is_inquiry
             }))
-          : [ /* داده‌های پیش‌فرض اگر دیتابیس خالی بود */
+          : [
               { key: "custom", num: "01", title: tServices("items.custom.title"), description: tServices("items.custom.description"), priceNote: tServices("items.custom.priceNote"), price: tServices("items.custom.price"), priceToman: tServices("items.custom.priceToman"), isInquiry: false },
               { key: "corporate", num: "02", title: tServices("items.corporate.title"), description: tServices("items.corporate.description"), priceNote: tServices("items.corporate.priceNote"), price: tServices("items.corporate.price"), priceToman: tServices("items.corporate.priceToman"), isInquiry: false },
               { key: "development", num: "03", title: tServices("items.development.title"), description: tServices("items.development.description"), priceNote: "", price: tServices("items.development.price"), priceToman: tServices("items.development.priceToman"), isInquiry: true },
@@ -199,23 +196,23 @@ export default async function HomePage({
         }
       />
 
-      {/* ============ 3. FEATURES ============ */}
-      <section className="relative overflow-hidden border-t border-border px-6 py-24 md:py-32">
+      {/* ============ 3. بخش ویژگی‌ها (Features) ============ */}
+      <section className="relative overflow-hidden border-t border-border px-4 py-16 md:px-6 md:py-32">
         <div className="pointer-events-none absolute -bottom-40 end-0 -z-20 h-[600px] w-[600px] rounded-full blur-[140px]" style={{ backgroundColor: "rgba(255, 116, 56, 0.04)" }} aria-hidden="true" />
         <div className="pointer-events-none absolute inset-0 -z-20 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, #D7DCE1 1px, transparent 0)", backgroundSize: "36px 36px" }} aria-hidden="true" />
         <SectionDecoration num="03" />
         <div className="relative z-10 mx-auto max-w-7xl">
           <SectionLabel en="FEATURES" />
-          <div className="mb-20 grid gap-10 md:mb-28 md:grid-cols-[1fr_auto] md:items-end md:gap-20">
-            <h2 className="text-4xl font-bold leading-[0.95] tracking-tight md:text-7xl lg:text-8xl">{tFeatures("title")}</h2>
+          <div className="mb-12 grid gap-6 md:mb-28 md:grid-cols-[1fr_auto] md:items-end md:gap-20">
+            <h2 className="text-3xl font-bold leading-[0.95] tracking-tight md:text-7xl lg:text-8xl">{tFeatures("title")}</h2>
             <p className="max-w-xs text-sm leading-relaxed text-muted md:pb-3 md:text-base">{tFeatures("note")}</p>
           </div>
           <div className="grid grid-cols-1 gap-x-16 md:grid-cols-2">
             {features.map((item, i) => (
-              <div key={i} className="group relative border-t border-border py-8 md:py-10">
-                <div className="flex items-start gap-5 md:gap-7">
-                  <span className="shrink-0 font-mono text-2xl font-light leading-none tracking-tighter text-muted transition-colors duration-500 group-hover:text-brand md:text-3xl">{String(i + 1).padStart(2, "0")}</span>
-                  <p className="pt-1 text-base font-medium leading-relaxed text-foreground/85 transition-colors duration-500 group-hover:text-foreground md:text-lg">{item}</p>
+              <div key={i} className="group relative border-t border-border py-6 md:py-10">
+                <div className="flex items-start gap-4 md:gap-7">
+                  <span className="shrink-0 font-mono text-xl font-light leading-none tracking-tighter text-muted transition-colors duration-500 group-hover:text-brand md:text-3xl">{String(i + 1).padStart(2, "0")}</span>
+                  <p className="pt-0.5 text-sm font-medium leading-relaxed text-foreground/85 transition-colors duration-500 group-hover:text-foreground md:pt-1 md:text-lg">{item}</p>
                 </div>
                 <span className="pointer-events-none absolute top-0 start-0 h-px w-0 bg-brand transition-all duration-700 group-hover:w-full" />
               </div>
@@ -225,73 +222,51 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* ============ 4. WORK (طراحی جدید و لوکس) ============ */}
-      <section id="work" className="relative scroll-mt-24 overflow-hidden border-t border-border px-6 py-24 md:py-32">
+      {/* ============ 4. بخش نمونه‌کارها (Work) ============ */}
+      <section id="work" className="relative scroll-mt-24 overflow-hidden border-t border-border px-4 py-16 md:px-6 md:py-32">
         <SectionDecoration num="04" />
         <div className="relative z-10 mx-auto max-w-7xl">
           <SectionLabel en="SELECTED WORK" />
-          <div className="grid gap-12 md:grid-cols-2 md:items-end mb-16 md:mb-24">
-            <h2 className="text-5xl font-bold leading-none md:text-7xl lg:text-8xl">{tWork("title")}</h2>
+          <div className="grid gap-6 md:grid-cols-2 md:items-end mb-12 md:mb-24">
+            <h2 className="text-4xl font-bold leading-none md:text-7xl lg:text-8xl">{tWork("title")}</h2>
             <div>
-              <p className="text-base leading-relaxed text-muted md:text-lg">{tWork("description")}</p>
+              <p className="text-sm leading-relaxed text-muted md:text-lg">{tWork("description")}</p>
             </div>
           </div>
           
           {projects.length === 0 ? (
-             <div className="rounded-2xl border border-border bg-card/30 p-12 text-center text-muted backdrop-blur-sm">
-                <p className="text-lg">{tWork("comingSoon")}</p>
+             <div className="rounded-2xl border border-border bg-card/30 p-8 text-center text-muted backdrop-blur-sm md:p-12">
+                <p className="text-base md:text-lg">{tWork("comingSoon")}</p>
              </div>
           ) : (
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
               {projects.map((project: any) => (
                 <div key={project.id} className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-[#111315]/50 backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 hover:border-brand/30 hover:shadow-[0_20px_40px_-20px_rgba(255,116,56,0.15)]">
-                  {/* تصویر پروژه */}
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-black/40">
                      {project.image_url ? (
                        // eslint-disable-next-line @next/next/no-img-element
                        <img src={project.image_url} alt={project.title} className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
-                     ) : (
-                       <div className="flex h-full items-center justify-center text-muted/50 text-sm font-mono uppercase tracking-widest">No Image</div>
-                     )}
-                     {/* نشان ویژه */}
-                     {project.is_featured && (
-                        <div className="absolute top-4 end-4 rounded-full bg-brand px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-brand-foreground shadow-lg">
-                          Featured
-                        </div>
-                     )}
+                     ) : (<div className="flex h-full items-center justify-center text-muted/50 text-sm font-mono uppercase tracking-widest">No Image</div>)}
+                     {project.is_featured && (<div className="absolute top-3 end-3 rounded-full bg-brand px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-brand-foreground shadow-lg md:top-4 md:end-4 md:px-3 md:text-[10px]">Featured</div>)}
                   </div>
-
-                  {/* محتوا */}
-                  <div className="flex flex-1 flex-col p-6 md:p-8">
-                    <div className="mb-3 flex items-center justify-between gap-4">
-                      <span className="font-mono text-[10px] uppercase tracking-widest text-brand">{project.category}</span>
-                    </div>
-                    <h3 className="mb-3 text-2xl font-bold leading-tight text-foreground transition-colors duration-300 group-hover:text-brand">
-                      {project.title}
-                    </h3>
-                    <p className="mb-6 text-sm leading-relaxed text-muted line-clamp-3 flex-1">
-                      {project.description}
-                    </p>
-                    
-                    {/* تکنولوژی‌ها */}
+                  <div className="flex flex-1 flex-col p-5 md:p-8">
+                    <div className="mb-2 flex items-center justify-between gap-4 md:mb-3"><span className="font-mono text-[9px] uppercase tracking-widest text-brand md:text-[10px]">{project.category}</span></div>
+                    <h3 className="mb-2 text-xl font-bold leading-tight text-foreground transition-colors duration-300 group-hover:text-brand md:mb-3 md:text-2xl">{project.title}</h3>
+                    <p className="mb-5 text-xs leading-relaxed text-muted line-clamp-3 flex-1 md:mb-6 md:text-sm">{project.description}</p>
                     {project.technologies && (
-                      <div className="mb-6 flex flex-wrap gap-2">
+                      <div className="mb-5 flex flex-wrap gap-1.5 md:mb-6 md:gap-2">
                         {project.technologies.split(',').map((tech: string, i: number) => (
-                          <span key={i} className="rounded-md border border-white/5 bg-white/[0.03] px-2.5 py-1 text-[10px] font-mono tracking-wider text-muted">{tech.trim()}</span>
+                          <span key={i} className="rounded-md border border-white/5 bg-white/[0.03] px-2 py-1 text-[9px] font-mono tracking-wider text-muted md:px-2.5 md:text-[10px]">{tech.trim()}</span>
                         ))}
                       </div>
                     )}
-                    
-                    {/* دکمه مشاهده */}
                     <div className="mt-auto pt-4 border-t border-white/[0.06]">
                       {project.project_url ? (
-                        <Link href={project.project_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-semibold text-foreground transition-colors hover:text-brand">
+                        <Link href={project.project_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs font-semibold text-foreground transition-colors hover:text-brand md:text-sm">
                           {locale === 'fa' ? 'مشاهده پروژه' : 'View Project'}
                           <span className="rtl:rotate-180 transition-transform duration-300 group-hover:translate-x-1">→</span>
                         </Link>
-                      ) : (
-                        <span className="text-sm font-semibold text-muted/50">{locale === 'fa' ? 'به‌زودی' : 'Coming Soon'}</span>
-                      )}
+                      ) : (<span className="text-xs font-semibold text-muted/50 md:text-sm">{locale === 'fa' ? 'به‌زودی' : 'Coming Soon'}</span>)}
                     </div>
                   </div>
                 </div>
@@ -301,7 +276,7 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* ============ 5. BIOGRAPHY ============ */}
+      {/* ============ 5. بخش بیوگرافی (Biography) ============ */}
       <section id="about" className="relative scroll-mt-24 border-t border-border">
         
         <div className="hidden md:block absolute inset-0 z-0 relative">
@@ -318,7 +293,7 @@ export default async function HomePage({
 
         <div className="relative z-10 mx-auto w-full max-w-7xl md:px-6 md:py-32 grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-0 items-end">
           
-          <div className="relative block w-full h-[65vh] md:hidden">
+          <div className="relative block w-full h-[50vh] md:hidden">
             <Image
               src="/bio-bg.jpg"
               alt="Biography Background"
@@ -333,39 +308,39 @@ export default async function HomePage({
 
           <div className="hidden md:block"></div>
 
-          <div className="flex flex-col items-start text-start max-w-xl px-6 py-16 md:px-0 md:py-0 md:mt-48">
-            <div className="mb-6 flex items-center justify-start gap-3 text-[10px] font-mono uppercase tracking-[0.25em] text-muted">
+          <div className="flex flex-col items-start text-start max-w-xl px-4 py-12 md:px-0 md:py-0 md:mt-48">
+            <div className="mb-4 flex items-center justify-start gap-3 text-[10px] font-mono uppercase tracking-[0.25em] text-muted md:mb-6">
               <span className="text-brand">05</span>
               <span className="h-px w-8 bg-border" />
               <span>BIOGRAPHY</span>
             </div>
             
-            <h2 className="text-4xl font-bold leading-[1.1] tracking-tight md:text-7xl lg:text-8xl">
+            <h2 className="text-3xl font-bold leading-[1.1] tracking-tight md:text-7xl lg:text-8xl">
               {tBio("title")}
             </h2>
             
-            <p className="mt-4 text-lg font-medium text-brand md:text-xl text-start">
+            <p className="mt-3 text-base font-medium text-brand md:mt-4 md:text-xl text-start">
               {tBio("subtitle")}
             </p>
 
-            <div className="relative mt-10 mb-8 flex flex-col items-start w-full">
-              <svg className="mb-4 h-8 w-8 text-brand/40 md:h-10 md:w-10" fill="currentColor" viewBox="0 0 24 24">
+            <div className="relative mt-8 mb-6 flex flex-col items-start w-full md:mt-10 md:mb-8">
+              <svg className="mb-3 h-6 w-6 text-brand/40 md:mb-4 md:h-10 md:w-10" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
               </svg>
               
-              <p className="text-lg font-medium leading-relaxed text-foreground md:text-xl lg:text-2xl max-w-lg text-start drop-shadow-sm">
+              <p className="text-base font-medium leading-relaxed text-foreground md:text-xl lg:text-2xl max-w-lg text-start drop-shadow-sm">
                 {tBio("p1")}
               </p>
             </div>
 
-            <div className="space-y-5 text-sm leading-relaxed text-muted md:text-base max-w-lg text-start drop-shadow-sm">
+            <div className="space-y-4 text-sm leading-relaxed text-muted md:space-y-5 md:text-base max-w-lg text-start drop-shadow-sm">
               <p>{tBio("p2")}</p>
               <p>{tBio("p3")}</p>
             </div>
 
-            <div className="mt-10 inline-flex flex-row items-center justify-start gap-3 rounded-full border border-white/10 bg-background/60 px-6 py-2.5 shadow-lg backdrop-blur-md">
-              <span className="flex h-2 w-2 shrink-0 animate-pulse rounded-full bg-brand" />
-              <span className="text-sm font-semibold tracking-wide text-foreground md:text-base">
+            <div className="mt-8 inline-flex flex-row items-center justify-start gap-3 rounded-full border border-white/10 bg-background/60 px-4 py-2 shadow-lg backdrop-blur-md md:mt-10 md:px-6 md:py-2.5">
+              <span className="flex h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-brand md:h-2 md:w-2" />
+              <span className="text-xs font-semibold tracking-wide text-foreground md:text-base">
                 {tBio("experience")}
               </span>
             </div>
@@ -373,33 +348,33 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* ============ 6. SKILLS & PRINCIPLES ============ */}
-      <section className="relative overflow-hidden border-t border-border px-6 py-24 md:py-32">
+      {/* ============ 6. بخش مهارت‌ها و اصول (Skills & Principles) ============ */}
+      <section className="relative overflow-hidden border-t border-border px-4 py-16 md:px-6 md:py-32">
         <SectionDecoration num="06" />
         <div className="relative z-10 mx-auto max-w-7xl">
           <SectionLabel en="SKILLS & PRINCIPLES" />
-          <div className="mb-16">
-            <h2 className="text-3xl font-bold md:text-5xl">{tBio("skillsTitle")}</h2>
-            <p className="mt-4 max-w-xl text-muted">{tBio("skillsSubtitle")}</p>
+          <div className="mb-10 md:mb-16">
+            <h2 className="text-2xl font-bold md:text-5xl">{tBio("skillsTitle")}</h2>
+            <p className="mt-3 max-w-xl text-sm text-muted md:mt-4 md:text-base">{tBio("skillsSubtitle")}</p>
           </div>
-          <div className="grid gap-16 md:grid-cols-2">
+          <div className="grid gap-10 md:grid-cols-2 md:gap-16">
             <div>
-              <h3 className="mb-6 border-b border-border pb-3 text-[10px] font-mono uppercase tracking-widest text-brand">SKILLS</h3>
-              <ul className="space-y-4">
+              <h3 className="mb-4 border-b border-border pb-3 text-[10px] font-mono uppercase tracking-widest text-brand md:mb-6">SKILLS</h3>
+              <ul className="space-y-3 md:space-y-4">
                 {skills.map((item, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm text-foreground/80 md:text-base">
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand md:mt-2" />
                     <span>{item}</span>
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h3 className="mb-6 border-b border-border pb-3 text-[10px] font-mono uppercase tracking-widest text-brand">PRINCIPLES</h3>
-              <ul className="space-y-4">
+              <h3 className="mb-4 border-b border-border pb-3 text-[10px] font-mono uppercase tracking-widest text-brand md:mb-6">PRINCIPLES</h3>
+              <ul className="space-y-3 md:space-y-4">
                 {principles.map((item, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm text-foreground/80 md:text-base">
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand md:mt-2" />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -409,28 +384,28 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* ============ 7. PROCESS ============ */}
-      <section className="relative overflow-hidden border-t border-border px-6 py-24 md:py-32">
+      {/* ============ 7. بخش فرآیند کاری (Process) ============ */}
+      <section className="relative overflow-hidden border-t border-border px-4 py-16 md:px-6 md:py-32">
         <SectionDecoration num="07" />
         <div className="relative z-10 mx-auto max-w-7xl">
           <SectionLabel en="PROCESS" />
-          <h2 className="mb-16 text-3xl font-bold md:text-5xl">{tProcess("title")}</h2>
-          <div className="grid gap-10 md:grid-cols-4">
+          <h2 className="mb-10 text-2xl font-bold md:mb-16 md:text-5xl">{tProcess("title")}</h2>
+          <div className="grid gap-8 md:grid-cols-4 md:gap-10">
             {processSteps.map((step, i) => (
               <div key={step} className="relative">
-                <div className="mb-4 flex items-center gap-3">
+                <div className="mb-3 flex items-center gap-3 md:mb-4">
                   <span className="text-[10px] font-mono text-brand">0{i + 1}</span>
                   <span className="h-px flex-1 bg-border" />
                 </div>
-                <h3 className="mb-3 text-lg font-semibold md:text-xl">{tProcess(`steps.${step}.title`)}</h3>
-                <p className="text-sm leading-relaxed text-muted">{tProcess(`steps.${step}.description`)}</p>
+                <h3 className="mb-2 text-base font-semibold md:mb-3 md:text-xl">{tProcess(`steps.${step}.title`)}</h3>
+                <p className="text-xs leading-relaxed text-muted md:text-sm">{tProcess(`steps.${step}.description`)}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ============ 8. CONTACT ============ */}
+      {/* ============ 8. بخش تماس (Contact) ============ */}
       <ContactSection locale={locale} />
       <Footer locale={locale} />
     </>

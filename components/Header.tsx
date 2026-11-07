@@ -19,11 +19,11 @@ export async function Header({ locale }: { locale: string }) {
 
   return (
     <header className="absolute top-0 left-0 right-0 z-50">
-      <div className="relative mx-auto flex h-24 max-w-7xl items-center justify-between px-4 md:h-32 md:ps-4 md:pe-10">
+      <div className="relative mx-auto flex h-20 max-w-7xl items-center justify-between px-4 md:h-32 md:ps-4 md:pe-10">
         
         <Link href={`/${locale}`} className="group flex shrink-0 items-center z-50">
           <div
-            className="signature-mask h-12 w-36 transition-opacity duration-300 group-hover:opacity-80 md:h-20 md:w-64 lg:h-24 lg:w-72"
+            className="signature-mask h-10 w-32 transition-opacity duration-300 group-hover:opacity-80 md:h-20 md:w-64 lg:h-24 lg:w-72"
             style={{
               maskPosition: isRtl ? "right center" : "left center",
               WebkitMaskPosition: isRtl ? "right center" : "left center",
