@@ -56,6 +56,68 @@ export async function generateMetadata({
   return { title: "Post Not Found" };
 }
 
+// تابع اختصاصی برای تمیز کردن تگ‌های HTML و تبدیل آن‌ها به استایل‌های زیبای سایت
+function formatContent(content: string) {
+  if (!content) return null;
+
+  // بررسی اینکه آیا محتوا شامل تگ‌های HTML است یا خیر
+  const isHtml = /<[a-z][\s\S]*>/i.test(content);
+
+  if (isHtml) {
+    // اگر HTML بود، تگ‌های اصلی را با استایل‌های Tailwind جایگزین می‌کنیم
+    let formatted = content;
+    
+    // جایگزینی تیترها
+    formatted = formatted.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '<h1 class="text-3xl md:text-4xl font-bold text-foreground mt-12 mb-6">$1</h1>');
+    formatted = formatted.replace(/<h2[^>]*>(.*?)<\/h2>/gi, '<h2 class="text-2xl md:text-3xl font-bold text-foreground mt-10 mb-4">$1</h2>');
+    formatted = formatted.replace(/<h3[^>]*>(.*?)<\/h3>/gi, '<h3 class="text-xl md:text-2xl font-bold text-foreground mt-8 mb-4">$1</h3>');
+    
+    // جایگزینی پاراگراف‌ها
+    formatted = formatted.replace(/<p[^>]*>(.*?)<\/p>/gi, '<p class="mb-6 text-base md:text-lg leading-relaxed text-muted font-light">$1</p>');
+    
+    // جایگزینی لیست‌ها
+    formatted = formatted.replace(/<ul[^>]*>/gi, '<ul class="mb-6 list-disc list-inside space-y-2 text-base md:text-lg text-muted font-light">');
+    formatted = formatted.replace(/<ol[^>]*>/gi, '<ol class="mb-6 list-decimal list-inside space-y-2 text-base md:text-lg text-muted font-light">');
+    formatted = formatted.replace(/<li[^>]*>(.*?)<\/li>/gi, '<li class="mb-2">$1</li>');
+    
+    // جایگزینی متن‌های بولد و ایتالیک
+    formatted = formatted.replace(/<strong[^>]*>(.*?)<\/strong>/gi, '<strong class="font-bold text-foreground">$1</strong>');
+    formatted = formatted.replace(/<b[^>]*>(.*?)<\/b>/gi, '<strong class="font-bold text-foreground">$1</strong>');
+    formatted = formatted.replace(/<em[^>]*>(.*?)<\/em>/gi, '<em class="italic text-foreground/80">$1</em>');
+
+    // حذف تگ‌های اضافی مثل span یا div
+    formatted = formatted.replace(/<(span|div)[^>]*>/gi, '');
+    formatted = formatted.replace(/<\/(span|div)>/gi, '');
+
+    return (
+      <div 
+        className="prose prose-invert max-w-none"
+        dangerouslySetInnerHTML={{ __html: formatted }} 
+      />
+    );
+  }
+
+  // اگر محتوا HTML نبود (متن ساده بود)، آن را با فرمت مارک‌داون نمایش می‌دهیم
+  return (
+    <div className="prose prose-invert prose-lg max-w-none text-muted leading-[2] md:leading-[2.3]">
+      {content.split("\n\n").map((paragraph: string, index: number) => {
+        if (paragraph.trim().startsWith("## ")) {
+          return (
+            <h2 key={index} className="mt-16 mb-6 text-2xl font-bold text-foreground md:text-3xl">
+              {paragraph.replace("## ", "")}
+            </h2>
+          );
+        }
+        return (
+          <p key={index} className="mb-8 text-base md:text-lg font-light whitespace-pre-wrap">
+            {paragraph}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 export default async function BlogPostPage({
   params,
 }: {
@@ -99,9 +161,6 @@ export default async function BlogPostPage({
       "@id": `https://parhamprojects.vercel.app/${locale}/blog/${post.slug}`
     }
   };
-
-  // تشخیص اینکه محتوا HTML است یا Markdown ساده
-  const isHtmlContent = /<[a-z][\s\S]*>/i.test(post.content);
 
   return (
     <>
@@ -156,31 +215,8 @@ export default async function BlogPostPage({
           )}
 
           <div className="relative">
-            {isHtmlContent ? (
-              // اگر هوش مصنوعی خروجی را به صورت HTML داده بود
-              <div 
-                className="prose prose-invert prose-lg max-w-none text-muted leading-[2] md:leading-[2.3]"
-                dangerouslySetInnerHTML={{ __html: post.content }} 
-              />
-            ) : (
-              // اگر هوش مصنوعی خروجی را به صورت متن ساده و Markdown داده بود
-              <div className="prose prose-invert prose-lg max-w-none text-muted leading-[2] md:leading-[2.3]">
-                {post.content.split("\n\n").map((paragraph: string, index: number) => {
-                  if (paragraph.trim().startsWith("## ")) {
-                    return (
-                      <h2 key={index} className="mt-16 mb-6 text-2xl font-bold text-foreground md:text-3xl">
-                        {paragraph.replace("## ", "")}
-                      </h2>
-                    );
-                  }
-                  return (
-                    <p key={index} className="mb-8 text-base md:text-lg font-light whitespace-pre-wrap">
-                      {paragraph}
-                    </p>
-                  );
-                })}
-              </div>
-            )}
+            {/* استفاده از تابع فرمت‌کننده برای نمایش زیبای متن */}
+            {formatContent(post.content)}
 
             <div className="pointer-events-none absolute bottom-0 end-0 opacity-20 mix-blend-screen pb-4 pe-4 md:pb-8 md:pe-8">
               <div
