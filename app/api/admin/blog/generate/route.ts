@@ -35,7 +35,7 @@ export async function POST(request: Request) {
         "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile", // مدلی که فارسی را عالی پشتیبانی می‌کند
+               model: "mistral-saba-24b",
         messages: [{ role: "user", content: systemPrompt }],
         temperature: 0.7,
         response_format: { type: "json_object" }
