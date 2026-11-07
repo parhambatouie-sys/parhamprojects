@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
+import { query } from "@/lib/db";
 import "./globals.css";
 
 const vazirmatn = localFont({
@@ -34,12 +35,25 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
+  
+  // دریافت عنوان و توضیحات از دیتابیس
+  let dbTitle = "";
+  let dbDesc = "";
+  try {
+    const result = await query("SELECT key, value FROM settings WHERE key IN ('site_title', 'site_description')");
+    const settings = result.rows.reduce((acc: any, row: any) => ({ ...acc, [row.key]: row.value }), {});
+    dbTitle = settings.site_title || "";
+    dbDesc = settings.site_description || "";
+  } catch (error) {
+    console.error("Failed to fetch settings for metadata");
+  }
+
   const t = await getTranslations({ locale, namespace: "Metadata" });
   const baseUrl = "https://parhamprojects.vercel.app";
 
   return {
-    title: t("title"),
-    description: t("description"),
+    title: dbTitle || t("title"),
+    description: dbDesc || t("description"),
     alternates: {
       canonical: `${baseUrl}/${locale}`,
       languages: {
@@ -49,16 +63,16 @@ export async function generateMetadata({
       },
     },
     openGraph: {
-      title: t("title"),
-      description: t("description"),
+      title: dbTitle || t("title"),
+      description: dbDesc || t("description"),
       url: `${baseUrl}/${locale}`,
-      siteName: "Parham Batouie",
+      siteName: dbTitle || "Parham Batouie",
       images: [
         {
           url: "/og-image.png",
           width: 1200,
           height: 630,
-          alt: "Parham Batouie Portfolio",
+          alt: dbTitle || "Parham Batouie Portfolio",
         },
       ],
       locale: locale === "fa" ? "fa_IR" : "en_US",
@@ -66,8 +80,8 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: t("title"),
-      description: t("description"),
+      title: dbTitle || t("title"),
+      description: dbDesc || t("description"),
       images: ["/og-image.png"],
     },
   };
@@ -88,7 +102,6 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
 
-  // اسکیمای معرفی شما به عنوان یک شخص/متخصص به گوگل
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",

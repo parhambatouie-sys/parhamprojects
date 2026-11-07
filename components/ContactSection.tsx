@@ -1,15 +1,34 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { query } from "@/lib/db";
 
 export async function ContactSection({ locale }: { locale: string }) {
   const t = await getTranslations("Contact");
 
+  // دریافت تنظیمات از دیتابیس
+  let settings: Record<string, string> = {};
+  try {
+    const result = await query("SELECT key, value FROM settings");
+    settings = result.rows.reduce((acc: any, row: any) => {
+      acc[row.key] = row.value;
+      return acc;
+    }, {});
+  } catch (error) {
+    console.error("Failed to fetch settings:", error);
+  }
+
+  // استفاده از داده‌های دیتابیس (اگر خالی بود، از متن پیش‌فرض استفاده می‌کند)
+  const instagramVal = settings.instagram || t("instagramValue");
+  const whatsappVal = settings.whatsapp || t("whatsappValue");
+  const telegramVal = settings.telegram || t("telegramValue");
+  const baleVal = t("baleValue"); // بله فعلاً در دیتابیس نیست
+
   const socials = [
-    { name: t("instagramLabel"), value: t("instagramValue"), href: `https://instagram.com/${t("instagramValue")}` },
-    { name: t("whatsappLabel"), value: t("whatsappValue"), href: `https://wa.me/${t("whatsappValue")}` },
-    { name: t("telegramLabel"), value: t("telegramValue"), href: `https://t.me/${t("telegramValue")}` },
-    { name: t("baleLabel"), value: t("baleValue"), href: `https://ble.ir/${t("baleValue")}` },
-  ];
+    { name: t("instagramLabel"), value: instagramVal, href: `https://instagram.com/${instagramVal}` },
+    { name: t("whatsappLabel"), value: whatsappVal, href: `https://wa.me/${whatsappVal}` },
+    { name: t("telegramLabel"), value: telegramVal, href: `https://t.me/${telegramVal}` },
+    { name: t("baleLabel"), value: baleVal, href: `https://ble.ir/${baleVal}` },
+  ].filter(s => s.value && !s.value.includes("YOUR_")); // مخفی کردن اگر خالی بود
 
   return (
     <section id="contact" className="relative scroll-mt-24 overflow-hidden border-t border-border px-6 py-16 md:py-32">
@@ -23,7 +42,6 @@ export async function ContactSection({ locale }: { locale: string }) {
             <div />
           </div>
         </div>
-        {/* عدد 08 در موبایل کوچک‌تر شده */}
         <div className="absolute -top-6 start-4 select-none font-mono text-[120px] font-black leading-none tracking-tighter text-foreground/[0.025] md:-top-20 md:start-8 md:text-[360px] lg:text-[460px]">
           08
         </div>
@@ -53,9 +71,7 @@ export async function ContactSection({ locale }: { locale: string }) {
                 className="group inline-flex w-full items-center justify-center gap-4 rounded-md border border-border bg-transparent px-8 py-4 text-sm font-semibold text-foreground transition-all duration-300 hover:border-brand hover:bg-brand hover:text-brand-foreground md:w-auto"
               >
                 {t("startProject")}
-                <span className="transition group-hover:translate-x-1 rtl:rotate-180">
-                  →
-                </span>
+                <span className="transition group-hover:translate-x-1 rtl:rotate-180">→</span>
               </Link>
             </div>
           </div>
