@@ -1,0 +1,47 @@
+[33m8bdfa5e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m fix: restore layout and global css to fix broken styles
+[33m2240cd1[m fix: force clear cache and apply editorial design and database update
+[33m0bf83b0[m feat: massive redesign for single project page and add gallery support
+[33md96af6b[m feat: link project cards to their dynamic single pages
+[33m75b8881[m feat: send telegram notifications for all admin changes and orders
+[33m3ed9077[m feat: add test telegram API route
+[33m3ac49a8[m feat: connect settings to contact section and seo metadata
+[33me215dc8[m feat: complete site settings CRUD backend and admin UI
+[33mb89f8e7[m feat: complete services CRUD and premium projects UI
+[33m4e7f391[m fix: force dynamic rendering for homepage to show new projects
+[33m8807558[m feat: add locale specific projects and premium UI redesign for work section
+[33med158b9[m feat: display dynamic projects from database in main work section
+[33mef907ff[m fix: alter image_url to text and improve error handling
+[33m583d40e[m refactor: replace vercel blob with client-side base64 image compression
+[33m016e0c0[m fix: add debug route and ensure files are pushed
+[33mee292b4[m fix: bypass @vercel/blob package and use native fetch to solve module error
+[33m4235b73[m chore: install @vercel/blob and fix typescript module error
+[33mb475e9b[m fix: add credentials to image upload and handle size limits
+[33m7c6912c[m feat: complete projects CRUD with image upload
+[33me19b760[m feat: add admin projects CRUD API routes
+[33m9fe18ae[m feat: add setup api to create projects table
+[33m485c2ee[m feat: add delete functionality to admin orders and fix auth cookie
+[33m01540ca[m fix: resolve empty orders by adding credentials to fetch
+[33m101d696[m fix: robust proxy basic auth with try-catch and matcher fix
+[33m9a7a931[m fix: migrate middleware.ts to proxy.ts for Next.js 16
+[33m0be98b1[m fix: force dynamic API route and refine middleware matcher
+[33m1e8c59e[m fix: replace vercel jwt auth with free basic auth in middleware
+[33m5a69c63[m feat: add middleware to protect admin api routes
+[33m82d6e65[m fix: resolve parallel route conflict in admin orders
+[33ma133029[m fix: secure orders API by restricting GET to admin route
+[33m1fbfe61[m Perf: optimize images and redesign blog pages
+[33ma9c947e[m Feat: Hide exchange widget and Toman prices on English version
+[33mf1d6964[m Feat: Set English as default locale for international clients
+[33m5d4f92f[m Fix: Revert language switcher to clean editorial style
+[33mff45572[m Feat: Update language switcher with liquid glass style
+[33mfabd9cd[m Feat: Add liquid glass language switcher
+[33mefdbbd1[m Fix: JSX tag error in blog post page
+[33m91f3b31[m Feat: Complete editorial blog section with SEO and dynamic routing
+[33m7df99e8[m Feat: Add blog structure and complete SEO files
+[33m4292798[m ix: ashboard layout and robust basic auth proxy
+[33mb8c6073[m Fix: Dashboard page code and robust middleware auth
+[33m5ca9fe0[m Fix desktop bio background and cleanup db file
+[33me70137a[m Fix desktop bio image and add custom favicon
+[33m297d66d[m Fix: bio image, English submitting text, dynamic dashboard stats
+[33ma020660[m Update custom favicon to signature
+[33mcfa86ba[m Fix: Combine intl middleware with basic auth
+[33mf55422a[m Initial commit: Complete portfolio project
