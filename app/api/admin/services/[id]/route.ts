@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { sendTelegramNotification } from "@/lib/telegram";
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     );
 
     if (result.rowCount === 0) return NextResponse.json({ error: "Service not found" }, { status: 404 });
+
+    // ارسال پیام به تلگرام
+    await sendTelegramNotification(`✏️ **یک خدمت ویرایش شد.**\n\n📌 عنوان: ${title}\n🌐 زبان: ${locale === 'fa' ? 'فارسی' : 'انگلیسی'}`);
+
     return NextResponse.json({ success: true, service: result.rows[0] });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Failed to update service" }, { status: 500 });
@@ -29,6 +34,10 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     const { id } = await params;
     const result = await query("DELETE FROM services WHERE id = $1", [id]);
     if (result.rowCount === 0) return NextResponse.json({ error: "Service not found" }, { status: 404 });
+
+    // ارسال پیام به تلگرام
+    await sendTelegramNotification(`🗑️ **یک خدمت حذف شد!**\n\n🆔 شناسه: ${id}`);
+
     return NextResponse.json({ success: true, message: "Service deleted successfully" });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Failed to delete service" }, { status: 500 });

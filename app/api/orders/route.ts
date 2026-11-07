@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { sendTelegramNotification } from "@/lib/telegram";
 
-// ثبت سفارش جدید (از طرف مشتری) - فقط متد POST عمومی است
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -12,6 +12,10 @@ export async function POST(request: Request) {
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
       [name, contact, projectType, description, budget, timeline]
     );
+
+    // ارسال پیام به تلگرام (بعد از ثبت موفق در دیتابیس)
+    const message = `🚨 **سفارش جدید ثبت شد!**\n\n👤 نام: ${name}\n📞 تماس: ${contact}\n📁 نوع پروژه: ${projectType}\n💰 بودجه: ${budget || "نامشخص"}\n⏱ زمان: ${timeline || "نامشخص"}\n\n📝 توضیحات:\n${description}`;
+    await sendTelegramNotification(message);
 
     return NextResponse.json({ success: true, id: result.rows[0].id }, { status: 201 });
   } catch (error) {

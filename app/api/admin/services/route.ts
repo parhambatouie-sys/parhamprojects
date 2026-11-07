@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { sendTelegramNotification } from "@/lib/telegram";
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,9 @@ export async function POST(request: Request) {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
       [title, description, price, price_toman, price_note, is_inquiry || false, sort_order || 0, is_published !== false, locale || 'fa']
     );
+
+    // ارسال پیام به تلگرام
+    await sendTelegramNotification(`➕ **خدمت جدید ساخته شد!**\n\n📌 عنوان: ${title}\n🌐 زبان: ${locale === 'fa' ? 'فارسی' : 'انگلیسی'}\n💰 قیمت: ${is_inquiry ? 'استعلامی' : price}`);
 
     return NextResponse.json({ success: true, service: result.rows[0] }, { status: 201 });
   } catch (error: any) {
