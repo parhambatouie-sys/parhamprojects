@@ -10,6 +10,8 @@ import { ExchangeWidget } from "@/components/ExchangeWidget";
 import { ContactSection } from "@/components/ContactSection";
 import { query } from "@/lib/db";
 
+export const dynamic = 'force-dynamic';
+
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
