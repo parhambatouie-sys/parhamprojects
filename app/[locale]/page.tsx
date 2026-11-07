@@ -8,6 +8,7 @@ import { Footer } from "@/components/Footer";
 import { ServicesSection } from "@/components/ServicesSection";
 import { ExchangeWidget } from "@/components/ExchangeWidget";
 import { ContactSection } from "@/components/ContactSection";
+import { query } from "@/lib/db";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -74,6 +75,15 @@ export default async function HomePage({
   const { locale } = await params;
   setRequestLocale(locale);
 
+  // گرفتن نمونه‌کارهای منتشر شده از دیتابیس
+  let projects = [];
+  try {
+    const result = await query("SELECT * FROM projects WHERE is_published = true ORDER BY sort_order ASC, created_at DESC");
+    projects = result.rows;
+  } catch (error) {
+    console.error("Failed to fetch projects:", error);
+  }
+
   const tHero = await getTranslations("Hero");
   const tServices = await getTranslations("Services");
   const tFeatures = await getTranslations("Features");
@@ -93,7 +103,6 @@ export default async function HomePage({
 
       {/* ============ 1. HERO ============ */}
       <section id="hero" className="relative min-h-[92vh] overflow-hidden px-6 pt-28 pb-12 md:pt-44 md:pb-24">
-        {/* استفاده از next/image با اولویت بالا برای LCP */}
         <Image
           src="/hero-bg.jpg"
           alt="Hero Background"
@@ -191,20 +200,61 @@ export default async function HomePage({
         <SectionDecoration num="04" />
         <div className="relative z-10 mx-auto max-w-7xl">
           <SectionLabel en="WORK" />
-          <div className="grid gap-12 md:grid-cols-2 md:items-end">
+          <div className="grid gap-12 md:grid-cols-2 md:items-end mb-16">
             <h2 className="text-4xl font-bold leading-none md:text-7xl">{tWork("title")}</h2>
             <div>
-              <div className="mb-4 inline-block rounded-full border border-brand/30 bg-brand/5 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.2em] text-brand">{tWork("comingSoon")}</div>
               <p className="text-base leading-relaxed text-muted">{tWork("description")}</p>
             </div>
           </div>
+          
+          {projects.length === 0 ? (
+             <div className="rounded-xl border border-border bg-card/50 p-10 text-center text-muted">
+                {tWork("comingSoon")}
+             </div>
+          ) : (
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {projects.map((project: any) => (
+                <div key={project.id} className="group relative overflow-hidden rounded-2xl border border-border bg-card/50 flex flex-col">
+                  <div className="aspect-video relative overflow-hidden bg-black/40">
+                     {project.image_url ? (
+                       // eslint-disable-next-line @next/next/no-img-element
+                       <img src={project.image_url} alt={project.title} className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
+                     ) : (
+                       <div className="flex h-full items-center justify-center text-muted text-sm">[بدون تصویر]</div>
+                     )}
+                  </div>
+                  <div className="p-6 flex-1 flex flex-col">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <h3 className="text-xl font-bold text-foreground">{project.title}</h3>
+                      {project.is_featured && <span className="shrink-0 text-xs font-semibold text-brand bg-brand/10 px-2 py-1 rounded">★ ویژه</span>}
+                    </div>
+                    <p className="text-sm text-muted line-clamp-3 mb-4 flex-1">{project.description}</p>
+                    
+                    {project.technologies && (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {project.technologies.split(',').map((tech: string, i: number) => (
+                          <span key={i} className="rounded bg-border/40 px-2 py-1 text-[10px] uppercase font-mono tracking-wider text-muted">{tech.trim()}</span>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {project.project_url && (
+                      <Link href={project.project_url} target="_blank" rel="noopener noreferrer" className="mt-auto inline-flex items-center gap-2 text-sm font-semibold text-brand transition hover:opacity-80">
+                        مشاهده پروژه 
+                        <span className="rtl:rotate-180">→</span>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
       {/* ============ 5. BIOGRAPHY ============ */}
       <section id="about" className="relative scroll-mt-24 border-t border-border">
         
-        {/* لایه عکس دسکتاپ با next/image */}
         <div className="hidden md:block absolute inset-0 z-0 relative">
           <Image
             src="/bio-bg.jpg"
@@ -219,7 +269,6 @@ export default async function HomePage({
 
         <div className="relative z-10 mx-auto w-full max-w-7xl md:px-6 md:py-32 grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-0 items-end">
           
-          {/* لایه عکس موبایل با next/image */}
           <div className="relative block w-full h-[65vh] md:hidden">
             <Image
               src="/bio-bg.jpg"
