@@ -35,7 +35,7 @@ export async function POST(request: Request) {
         "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-               model: "mistral-saba-24b",
+              model: "openai/gpt-oss-120b",
         messages: [{ role: "user", content: systemPrompt }],
         temperature: 0.7,
         response_format: { type: "json_object" }
