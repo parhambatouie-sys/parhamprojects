@@ -5,10 +5,10 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // ۱. ساخت جدول نمونه‌کارها (اگر نبود)
+    // ۱. ستون زبان برای پروژه‌ها
     await query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS locale VARCHAR(5) DEFAULT 'fa';`);
     
-    // ۲. ساخت جدول خدمات (Services)
+    // ۲. جدول خدمات
     await query(`
       CREATE TABLE IF NOT EXISTS services (
         id SERIAL PRIMARY KEY,
@@ -25,7 +25,16 @@ export async function GET() {
       );
     `);
 
-    return NextResponse.json({ success: true, message: "✅ دیتابیس برای خدمات و نمونه‌کارها آماده است." });
+    // ۳. جدول تنظیمات سایت (به صورت کلید-مقدار)
+    await query(`
+      CREATE TABLE IF NOT EXISTS settings (
+        key VARCHAR(100) PRIMARY KEY,
+        value TEXT,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    return NextResponse.json({ success: true, message: "✅ دیتابیس برای خدمات، نمونه‌کارها و تنظیمات آماده است." });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
