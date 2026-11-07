@@ -1,16 +1,25 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 
+// جلوگیری از کش شدن این مسیر
 export const dynamic = 'force-dynamic';
 
+/**
+ * این API برای ساخت جداول دیتابیس استفاده می‌شود.
+ * با هر بار باز کردن این لینک، مطمئن می‌شویم تمام جداول مورد نیاز وجود دارند.
+ */
 export async function GET() {
   try {
+    // ==========================================
     // ۱. آپدیت‌های مربوط به جدول پروژه‌ها (نمونه‌کارها)
+    // ==========================================
     await query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS locale VARCHAR(5) DEFAULT 'fa';`);
     await query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS content TEXT;`);
     await query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS gallery_images TEXT;`);
     
+    // ==========================================
     // ۲. ساخت جدول خدمات (Services)
+    // ==========================================
     await query(`
       CREATE TABLE IF NOT EXISTS services (
         id SERIAL PRIMARY KEY,
@@ -27,7 +36,9 @@ export async function GET() {
       );
     `);
 
+    // ==========================================
     // ۳. ساخت جدول تنظیمات سایت (Settings)
+    // ==========================================
     await query(`
       CREATE TABLE IF NOT EXISTS settings (
         key VARCHAR(100) PRIMARY KEY,
@@ -36,7 +47,9 @@ export async function GET() {
       );
     `);
 
-    // ۴. جدید: ساخت جدول مقالات وبلاگ (Posts)
+    // ==========================================
+    // ۴. ساخت جدول مقالات وبلاگ (Posts)
+    // ==========================================
     await query(`
       CREATE TABLE IF NOT EXISTS posts (
         id SERIAL PRIMARY KEY,
@@ -55,8 +68,26 @@ export async function GET() {
       );
     `);
 
-    return NextResponse.json({ success: true, message: "✅ تمام جداول (پروژه‌ها، خدمات، تنظیمات و مقالات) با موفقیت آماده شدند." });
+    // ==========================================
+    // ۵. ساخت جدول وضعیت موقت ربات تلگرام
+    // این جدول برای ذخیره موضوع مقاله قبل از انتخاب زبان استفاده می‌شود
+    // ==========================================
+    await query(`
+      CREATE TABLE IF NOT EXISTS tg_state (
+        chat_id VARCHAR(50) PRIMARY KEY,
+        prompt TEXT
+      );
+    `);
+
+    return NextResponse.json({ 
+      success: true, 
+      message: "✅ تمام جداول دیتابیس (پروژه‌ها، خدمات، تنظیمات، مقالات و وضعیت تلگرام) با موفقیت آماده شدند." 
+    });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    console.error("Setup API Error:", error);
+    return NextResponse.json({ 
+      success: false, 
+      message: error.message || "خطا در ساخت جداول" 
+    }, { status: 500 });
   }
 }
