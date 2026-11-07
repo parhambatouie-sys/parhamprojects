@@ -7,6 +7,7 @@
     "home": "Home",
     "services": "Services",
     "work": "Work",
+    "blog": "Blog",
     "about": "Biography",
     "contact": "Contact Me",
     "order": "Start a Project",
@@ -168,5 +169,11 @@
     "tagline": "Designing and developing digital experiences",
     "navTitle": "Pages",
     "rights": "This website belongs to Parham Batouie."
+  },
+  "Blog": {
+    "title": "Blog & Insights",
+    "subtitle": "A collection of articles on design, development, and SEO.",
+    "backToBlog": "Back to Blog",
+    "readTime": "min read"
   }
 }

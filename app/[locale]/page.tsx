@@ -8,6 +8,7 @@ import { Footer } from "@/components/Footer";
 import { ServicesSection } from "@/components/ServicesSection";
 import { ExchangeWidget } from "@/components/ExchangeWidget";
 import { ContactSection } from "@/components/ContactSection";
+import { LatestPosts } from "@/components/LatestPosts";
 import { query } from "@/lib/db";
 
 export const dynamic = 'force-dynamic';
@@ -115,7 +116,7 @@ export default async function HomePage({
     <>
       <Header locale={locale} />
 
-      {/* ============ 1. بخش هیرو (Hero) ============ */}
+      {/* ============ 1. بخش هیرو ============ */}
       <section id="hero" className="relative min-h-[85vh] overflow-hidden px-4 pt-24 pb-12 md:min-h-[92vh] md:px-6 md:pt-44 md:pb-24">
         <Image
           src="/hero-bg.jpg"
@@ -166,7 +167,7 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* ============ 2. بخش خدمات (Services) ============ */}
+      {/* ============ 2. بخش خدمات ============ */}
       <ServicesSection
         locale={locale}
         label="SERVICES"
@@ -196,7 +197,7 @@ export default async function HomePage({
         }
       />
 
-      {/* ============ 3. بخش ویژگی‌ها (Features) ============ */}
+      {/* ============ 3. بخش ویژگی‌ها ============ */}
       <section className="relative overflow-hidden border-t border-border px-4 py-16 md:px-6 md:py-32">
         <div className="pointer-events-none absolute -bottom-40 end-0 -z-20 h-[600px] w-[600px] rounded-full blur-[140px]" style={{ backgroundColor: "rgba(255, 116, 56, 0.04)" }} aria-hidden="true" />
         <div className="pointer-events-none absolute inset-0 -z-20 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, #D7DCE1 1px, transparent 0)", backgroundSize: "36px 36px" }} aria-hidden="true" />
@@ -222,7 +223,7 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* ============ 4. بخش نمونه‌کارها (Work) ============ */}
+      {/* ============ 4. بخش نمونه‌کارها ============ */}
       <section id="work" className="relative scroll-mt-24 overflow-hidden border-t border-border px-4 py-16 md:px-6 md:py-32">
         <SectionDecoration num="04" />
         <div className="relative z-10 mx-auto max-w-7xl">
@@ -276,7 +277,10 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* ============ 5. بخش بیوگرافی (Biography) ============ */}
+      {/* ============ بخش آخرین مقالات (جدید) ============ */}
+      <LatestPosts locale={locale} />
+
+      {/* ============ 5. بخش بیوگرافی ============ */}
       <section id="about" className="relative scroll-mt-24 border-t border-border">
         
         <div className="hidden md:block absolute inset-0 z-0 relative">
@@ -348,7 +352,7 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* ============ 6. بخش مهارت‌ها و اصول (Skills & Principles) ============ */}
+      {/* ============ 6. بخش مهارت‌ها ============ */}
       <section className="relative overflow-hidden border-t border-border px-4 py-16 md:px-6 md:py-32">
         <SectionDecoration num="06" />
         <div className="relative z-10 mx-auto max-w-7xl">
@@ -384,7 +388,7 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* ============ 7. بخش فرآیند کاری (Process) ============ */}
+      {/* ============ 7. بخش فرآیند ============ */}
       <section className="relative overflow-hidden border-t border-border px-4 py-16 md:px-6 md:py-32">
         <SectionDecoration num="07" />
         <div className="relative z-10 mx-auto max-w-7xl">
@@ -405,7 +409,7 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* ============ 8. بخش تماس (Contact) ============ */}
+      {/* ============ 8. بخش تماس ============ */}
       <ContactSection locale={locale} />
       <Footer locale={locale} />
     </>

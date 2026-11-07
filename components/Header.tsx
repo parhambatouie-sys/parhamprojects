@@ -8,6 +8,7 @@ export async function Header({ locale }: { locale: string }) {
   const t = await getTranslations("Nav");
   const isRtl = locale === "fa";
 
+  // ترتیب منوها دقیقاً طبق پیشنهاد تغییر کرد (وبلاگ بعد از نمونه‌کارها)
   const navItems = [
     { href: `/${locale}`, label: t("home") },
     { href: `/${locale}#services`, label: t("services") },
@@ -45,7 +46,6 @@ export async function Header({ locale }: { locale: string }) {
         </nav>
 
         <div className="flex items-center gap-2 md:gap-3">
-          {/* نمایش باکس دلار در موبایل فقط برای زبان فارسی */}
           {locale === "fa" && (
             <div className="block md:hidden">
               <ExchangeWidget locale={locale} />
