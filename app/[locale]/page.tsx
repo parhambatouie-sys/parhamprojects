@@ -78,6 +78,7 @@ export default async function HomePage({
   const { locale } = await params;
   setRequestLocale(locale);
 
+  // دریافت نمونه‌کارها
   let projects = [];
   try {
     const result = await query(
@@ -89,6 +90,7 @@ export default async function HomePage({
     console.error("Failed to fetch projects:", error);
   }
 
+  // دریافت خدمات
   let dbServices = [];
   try {
     const result = await query(
@@ -277,49 +279,37 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* ============ بخش آخرین مقالات (جدید) ============ */}
+      {/* ============ 5. بخش آخرین مقالات (برای هر دو زبان) ============ */}
       <LatestPosts locale={locale} />
 
-      {/* ============ 5. بخش بیوگرافی ============ */}
-      <section id="about" className="relative scroll-mt-24 border-t border-border">
+      {/* ============ 6. بخش بیوگرافی (اصلاح شده برای دسکتاپ) ============ */}
+      <section id="about" className="relative scroll-mt-24 border-t border-border overflow-hidden">
         
-        <div className="hidden md:block absolute inset-0 z-0 relative">
-          <Image
-            src="/bio-bg.jpg"
-            alt="Biography Background"
-            fill
-            quality={75}
-            sizes="100vw"
-            className="object-cover object-center opacity-70"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#111315] via-[#111315]/80 to-transparent" />
-        </div>
-
-        <div className="relative z-10 mx-auto w-full max-w-7xl md:px-6 md:py-32 grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-0 items-end">
+        <div className="relative z-10 mx-auto w-full max-w-7xl md:px-6 md:py-32 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
           
-          <div className="relative block w-full h-[50vh] md:hidden">
+          {/* ستون عکس */}
+          <div className="relative w-full h-[50vh] md:h-[600px] rounded-none md:rounded-3xl overflow-hidden order-1 md:order-none">
             <Image
               src="/bio-bg.jpg"
-              alt="Biography Background"
+              alt="Parham Batouie"
               fill
-              quality={75}
-              sizes="100vw"
+              quality={85}
+              sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover object-center"
             />
-            <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/80 to-transparent" />
+            <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background to-transparent md:hidden" />
+            <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/80 to-transparent md:hidden" />
           </div>
 
-          <div className="hidden md:block"></div>
-
-          <div className="flex flex-col items-start text-start max-w-xl px-4 py-12 md:px-0 md:py-0 md:mt-48">
+          {/* ستون متن‌ها */}
+          <div className="flex flex-col items-start text-start max-w-xl px-4 md:px-0 py-8 md:py-0">
             <div className="mb-4 flex items-center justify-start gap-3 text-[10px] font-mono uppercase tracking-[0.25em] text-muted md:mb-6">
               <span className="text-brand">05</span>
               <span className="h-px w-8 bg-border" />
               <span>BIOGRAPHY</span>
             </div>
             
-            <h2 className="text-3xl font-bold leading-[1.1] tracking-tight md:text-7xl lg:text-8xl">
+            <h2 className="text-3xl font-bold leading-[1.1] tracking-tight md:text-6xl lg:text-7xl">
               {tBio("title")}
             </h2>
             
@@ -352,7 +342,7 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* ============ 6. بخش مهارت‌ها ============ */}
+      {/* ============ 7. بخش مهارت‌ها ============ */}
       <section className="relative overflow-hidden border-t border-border px-4 py-16 md:px-6 md:py-32">
         <SectionDecoration num="06" />
         <div className="relative z-10 mx-auto max-w-7xl">
@@ -388,7 +378,7 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* ============ 7. بخش فرآیند ============ */}
+      {/* ============ 8. بخش فرآیند ============ */}
       <section className="relative overflow-hidden border-t border-border px-4 py-16 md:px-6 md:py-32">
         <SectionDecoration num="07" />
         <div className="relative z-10 mx-auto max-w-7xl">
@@ -409,7 +399,7 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* ============ 8. بخش تماس ============ */}
+      {/* ============ 9. بخش تماس ============ */}
       <ContactSection locale={locale} />
       <Footer locale={locale} />
     </>
