@@ -123,9 +123,12 @@ export async function POST(request: Request) {
       }
 
       console.log("Saving prompt to database...");
-      await query(`
-        CREATE TABLE IF NOT EXISTS tg_state (chat_id VARCHAR(50) PRIMARY KEY, prompt TEXT);
-        INSERT INTO tg_state (chat_id, prompt) VALUES ($1, $2) ON CONFLICT (chat_id) DO UPDATE SET prompt = $2;
+
+            await query(`
+        INSERT INTO tg_state (chat_id, prompt) 
+        VALUES ($1, $2) 
+        ON CONFLICT (chat_id) 
+        DO UPDATE SET prompt = $2
       `, [chatId.toString(), userText]);
 
       console.log("Sending language selection message...");
