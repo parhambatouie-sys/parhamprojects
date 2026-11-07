@@ -100,6 +100,9 @@ export default async function BlogPostPage({
     }
   };
 
+  // تشخیص اینکه محتوا HTML است یا Markdown ساده
+  const isHtmlContent = /<[a-z][\s\S]*>/i.test(post.content);
+
   return (
     <>
       <script
@@ -153,22 +156,31 @@ export default async function BlogPostPage({
           )}
 
           <div className="relative">
-            <div className="prose prose-invert prose-lg max-w-none text-muted leading-[2] md:leading-[2.3]">
-              {post.content.split("\n\n").map((paragraph: string, index: number) => {
-                if (paragraph.trim().startsWith("## ")) {
+            {isHtmlContent ? (
+              // اگر هوش مصنوعی خروجی را به صورت HTML داده بود
+              <div 
+                className="prose prose-invert prose-lg max-w-none text-muted leading-[2] md:leading-[2.3]"
+                dangerouslySetInnerHTML={{ __html: post.content }} 
+              />
+            ) : (
+              // اگر هوش مصنوعی خروجی را به صورت متن ساده و Markdown داده بود
+              <div className="prose prose-invert prose-lg max-w-none text-muted leading-[2] md:leading-[2.3]">
+                {post.content.split("\n\n").map((paragraph: string, index: number) => {
+                  if (paragraph.trim().startsWith("## ")) {
+                    return (
+                      <h2 key={index} className="mt-16 mb-6 text-2xl font-bold text-foreground md:text-3xl">
+                        {paragraph.replace("## ", "")}
+                      </h2>
+                    );
+                  }
                   return (
-                    <h2 key={index} className="mt-16 mb-6 text-2xl font-bold text-foreground md:text-3xl">
-                      {paragraph.replace("## ", "")}
-                    </h2>
+                    <p key={index} className="mb-8 text-base md:text-lg font-light whitespace-pre-wrap">
+                      {paragraph}
+                    </p>
                   );
-                }
-                return (
-                  <p key={index} className="mb-8 text-base md:text-lg font-light whitespace-pre-wrap">
-                    {paragraph}
-                  </p>
-                );
-              })}
-            </div>
+                })}
+              </div>
+            )}
 
             <div className="pointer-events-none absolute bottom-0 end-0 opacity-20 mix-blend-screen pb-4 pe-4 md:pb-8 md:pe-8">
               <div
