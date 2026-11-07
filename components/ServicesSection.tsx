@@ -42,6 +42,12 @@ export function ServicesSection({
     const rows = sectionRef.current?.querySelectorAll("[data-reveal]");
     if (!rows || rows.length === 0) return;
 
+    // اصلاح باگ موبایل: اگر کاربر در موبایل است، همه خدمات را فوراً نشان بده
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      rows.forEach((r) => r.classList.add("is-visible"));
+      return;
+    }
+
     const obs = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
