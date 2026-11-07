@@ -10,6 +10,7 @@ import { ExchangeWidget } from "@/components/ExchangeWidget";
 import { ContactSection } from "@/components/ContactSection";
 import { query } from "@/lib/db";
 
+// جلوگیری از کش شدن صفحه اصلی برای نمایش فوری تغییرات دیتابیس
 export const dynamic = 'force-dynamic';
 
 export function generateStaticParams() {
@@ -39,7 +40,12 @@ export async function generateMetadata({
 function SectionLabel({ num, en }: { num?: string; en: string }) {
   return (
     <div className="mb-10 flex items-center gap-3 text-[10px] font-mono uppercase tracking-[0.25em] text-muted">
-      {num && (<><span className="text-brand">{num}</span><span className="h-px w-8 bg-border" /></>)}
+      {num && (
+        <>
+          <span className="text-brand">{num}</span>
+          <span className="h-px w-8 bg-border" />
+        </>
+      )}
       {!num && <span className="h-px w-8 bg-border" />}
       <span>{en}</span>
     </div>
@@ -72,7 +78,7 @@ export default async function HomePage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  // دریافت نمونه‌کارها فقط برای زبان فعلی
+  // ۱. دریافت نمونه‌کارها از دیتابیس برای زبان فعلی
   let projects = [];
   try {
     const result = await query(
@@ -82,6 +88,18 @@ export default async function HomePage({
     projects = result.rows;
   } catch (error) {
     console.error("Failed to fetch projects:", error);
+  }
+
+  // ۲. دریافت خدمات از دیتابیس برای زبان فعلی
+  let dbServices = [];
+  try {
+    const result = await query(
+      "SELECT * FROM services WHERE is_published = true AND locale = $1 ORDER BY sort_order ASC",
+      [locale]
+    );
+    dbServices = result.rows;
+  } catch (error) {
+    console.error("Failed to fetch services:", error);
   }
 
   const tHero = await getTranslations("Hero");
@@ -102,27 +120,50 @@ export default async function HomePage({
 
       {/* ============ 1. HERO ============ */}
       <section id="hero" className="relative min-h-[92vh] overflow-hidden px-6 pt-28 pb-12 md:pt-44 md:pb-24">
-        <Image src="/hero-bg.jpg" alt="Hero Background" fill priority quality={85} sizes="100vw" className="object-cover object-center -z-20" />
+        <Image
+          src="/hero-bg.jpg"
+          alt="Hero Background"
+          fill
+          priority
+          quality={85}
+          sizes="100vw"
+          className="object-cover object-center -z-20"
+        />
+        
         <div className="absolute inset-0 -z-10 bg-gradient-to-l from-background/95 via-background/55 to-background/15 md:via-background/40 md:to-transparent" />
         <div className="absolute inset-x-0 bottom-0 -z-10 h-56 bg-gradient-to-t from-background via-background/80 to-transparent" />
 
         {locale === "fa" && (
-          <div className="absolute end-6 top-28 z-20 hidden md:block md:end-10 md:top-32"><ExchangeWidget locale={locale} /></div>
+          <div className="absolute end-6 top-28 z-20 hidden md:block md:end-10 md:top-32">
+            <ExchangeWidget locale={locale} />
+          </div>
         )}
 
         <div className="relative mx-auto flex min-h-[75vh] max-w-7xl flex-col justify-end pb-0 md:min-h-[70vh] md:justify-center md:pb-0">
           <div>
             <SectionLabel num="01" en="INTRO" />
+
             <div className="mt-6 flex flex-wrap gap-3 md:mt-32">
-              <Link href="#services" className="rounded-md bg-brand px-7 py-3.5 text-sm font-semibold text-brand-foreground transition hover:opacity-90">{tHero("viewServices")}</Link>
-              <Link href="#about" className="rounded-md border border-border bg-background/30 px-7 py-3.5 text-sm font-semibold backdrop-blur-sm transition hover:border-brand/40">{tHero("ctaSecondary")}</Link>
+              <Link href="#services" className="rounded-md bg-brand px-7 py-3.5 text-sm font-semibold text-brand-foreground transition hover:opacity-90">
+                {tHero("viewServices")}
+              </Link>
+              <Link href="#about" className="rounded-md border border-border bg-background/30 px-7 py-3.5 text-sm font-semibold backdrop-blur-sm transition hover:border-brand/40">
+                {tHero("ctaSecondary")}
+              </Link>
             </div>
+
             <h1 className="mt-8 text-[clamp(2rem,4vw,3.5rem)] font-bold leading-[1.15] tracking-tight md:mt-14 md:whitespace-nowrap">
               {tHero.rich("title", { hl: (chunks) => <span className="stroke-heading-word">{chunks}</span> })}
             </h1>
-            <p className="mt-4 text-base font-medium text-foreground md:mt-5 md:text-lg">{tHero("tagline")}</p>
+
+            <p className="mt-4 text-base font-medium text-foreground md:mt-5 md:text-lg">
+              {tHero("tagline")}
+            </p>
+
             <div className="mt-8 flex items-center gap-3 text-[10px] font-mono uppercase tracking-[0.25em] text-muted md:mt-16">
-              <span>{tHero("scrollHint")}</span><span className="h-px w-16 bg-border" /><span>↓</span>
+              <span>{tHero("scrollHint")}</span>
+              <span className="h-px w-16 bg-border" />
+              <span>↓</span>
             </div>
           </div>
         </div>
@@ -130,18 +171,38 @@ export default async function HomePage({
 
       {/* ============ 2. SERVICES ============ */}
       <ServicesSection
-        locale={locale} label="SERVICES" title={tServices("title")} intro={tServices("intro")}
-        ctaNote={tServices("ctaNote")} ctaText={tServices("ctaButton")} ctaHref={`/${locale}/order`} inquiryLabel={tServices("inquiryLabel")}
-        services={[
-          { key: "custom", num: "01", title: tServices("items.custom.title"), description: tServices("items.custom.description"), priceNote: tServices("items.custom.priceNote"), price: tServices("items.custom.price"), priceToman: tServices("items.custom.priceToman"), isInquiry: false },
-          { key: "corporate", num: "02", title: tServices("items.corporate.title"), description: tServices("items.corporate.description"), priceNote: tServices("items.corporate.priceNote"), price: tServices("items.corporate.price"), priceToman: tServices("items.corporate.priceToman"), isInquiry: false },
-          { key: "development", num: "03", title: tServices("items.development.title"), description: tServices("items.development.description"), priceNote: "", price: tServices("items.development.price"), priceToman: tServices("items.development.priceToman"), isInquiry: true },
-        ]}
+        locale={locale}
+        label="SERVICES"
+        title={tServices("title")}
+        intro={tServices("intro")}
+        ctaNote={tServices("ctaNote")}
+        ctaText={tServices("ctaButton")}
+        ctaHref={`/${locale}/order`}
+        inquiryLabel={tServices("inquiryLabel")}
+        services={
+          dbServices.length > 0 
+          ? dbServices.map((s: any, i: number) => ({
+              key: String(s.id),
+              num: String(i + 1).padStart(2, '0'),
+              title: s.title,
+              description: s.description,
+              priceNote: s.price_note || "",
+              price: s.is_inquiry ? (locale === 'fa' ? 'استعلام قیمت' : 'Request Quote') : s.price,
+              priceToman: s.price_toman || "",
+              isInquiry: s.is_inquiry
+            }))
+          : [ /* داده‌های پیش‌فرض اگر دیتابیس خالی بود */
+              { key: "custom", num: "01", title: tServices("items.custom.title"), description: tServices("items.custom.description"), priceNote: tServices("items.custom.priceNote"), price: tServices("items.custom.price"), priceToman: tServices("items.custom.priceToman"), isInquiry: false },
+              { key: "corporate", num: "02", title: tServices("items.corporate.title"), description: tServices("items.corporate.description"), priceNote: tServices("items.corporate.priceNote"), price: tServices("items.corporate.price"), priceToman: tServices("items.corporate.priceToman"), isInquiry: false },
+              { key: "development", num: "03", title: tServices("items.development.title"), description: tServices("items.development.description"), priceNote: "", price: tServices("items.development.price"), priceToman: tServices("items.development.priceToman"), isInquiry: true },
+            ]
+        }
       />
 
       {/* ============ 3. FEATURES ============ */}
       <section className="relative overflow-hidden border-t border-border px-6 py-24 md:py-32">
         <div className="pointer-events-none absolute -bottom-40 end-0 -z-20 h-[600px] w-[600px] rounded-full blur-[140px]" style={{ backgroundColor: "rgba(255, 116, 56, 0.04)" }} aria-hidden="true" />
+        <div className="pointer-events-none absolute inset-0 -z-20 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, #D7DCE1 1px, transparent 0)", backgroundSize: "36px 36px" }} aria-hidden="true" />
         <SectionDecoration num="03" />
         <div className="relative z-10 mx-auto max-w-7xl">
           <SectionLabel en="FEATURES" />
@@ -242,33 +303,71 @@ export default async function HomePage({
 
       {/* ============ 5. BIOGRAPHY ============ */}
       <section id="about" className="relative scroll-mt-24 border-t border-border">
+        
         <div className="hidden md:block absolute inset-0 z-0 relative">
-          <Image src="/bio-bg.jpg" alt="Biography Background" fill quality={75} sizes="100vw" className="object-cover object-center opacity-70" />
+          <Image
+            src="/bio-bg.jpg"
+            alt="Biography Background"
+            fill
+            quality={75}
+            sizes="100vw"
+            className="object-cover object-center opacity-70"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-[#111315] via-[#111315]/80 to-transparent" />
         </div>
+
         <div className="relative z-10 mx-auto w-full max-w-7xl md:px-6 md:py-32 grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-0 items-end">
+          
           <div className="relative block w-full h-[65vh] md:hidden">
-            <Image src="/bio-bg.jpg" alt="Biography Background" fill quality={75} sizes="100vw" className="object-cover object-center" />
+            <Image
+              src="/bio-bg.jpg"
+              alt="Biography Background"
+              fill
+              quality={75}
+              sizes="100vw"
+              className="object-cover object-center"
+            />
             <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background to-transparent" />
             <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/80 to-transparent" />
           </div>
+
           <div className="hidden md:block"></div>
+
           <div className="flex flex-col items-start text-start max-w-xl px-6 py-16 md:px-0 md:py-0 md:mt-48">
             <div className="mb-6 flex items-center justify-start gap-3 text-[10px] font-mono uppercase tracking-[0.25em] text-muted">
-              <span className="text-brand">05</span><span className="h-px w-8 bg-border" /><span>BIOGRAPHY</span>
+              <span className="text-brand">05</span>
+              <span className="h-px w-8 bg-border" />
+              <span>BIOGRAPHY</span>
             </div>
-            <h2 className="text-4xl font-bold leading-[1.1] tracking-tight md:text-7xl lg:text-8xl">{tBio("title")}</h2>
-            <p className="mt-4 text-lg font-medium text-brand md:text-xl text-start">{tBio("subtitle")}</p>
+            
+            <h2 className="text-4xl font-bold leading-[1.1] tracking-tight md:text-7xl lg:text-8xl">
+              {tBio("title")}
+            </h2>
+            
+            <p className="mt-4 text-lg font-medium text-brand md:text-xl text-start">
+              {tBio("subtitle")}
+            </p>
+
             <div className="relative mt-10 mb-8 flex flex-col items-start w-full">
-              <svg className="mb-4 h-8 w-8 text-brand/40 md:h-10 md:w-10" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" /></svg>
-              <p className="text-lg font-medium leading-relaxed text-foreground md:text-xl lg:text-2xl max-w-lg text-start drop-shadow-sm">{tBio("p1")}</p>
+              <svg className="mb-4 h-8 w-8 text-brand/40 md:h-10 md:w-10" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+              </svg>
+              
+              <p className="text-lg font-medium leading-relaxed text-foreground md:text-xl lg:text-2xl max-w-lg text-start drop-shadow-sm">
+                {tBio("p1")}
+              </p>
             </div>
+
             <div className="space-y-5 text-sm leading-relaxed text-muted md:text-base max-w-lg text-start drop-shadow-sm">
-              <p>{tBio("p2")}</p><p>{tBio("p3")}</p>
+              <p>{tBio("p2")}</p>
+              <p>{tBio("p3")}</p>
             </div>
+
             <div className="mt-10 inline-flex flex-row items-center justify-start gap-3 rounded-full border border-white/10 bg-background/60 px-6 py-2.5 shadow-lg backdrop-blur-md">
               <span className="flex h-2 w-2 shrink-0 animate-pulse rounded-full bg-brand" />
-              <span className="text-sm font-semibold tracking-wide text-foreground md:text-base">{tBio("experience")}</span>
+              <span className="text-sm font-semibold tracking-wide text-foreground md:text-base">
+                {tBio("experience")}
+              </span>
             </div>
           </div>
         </div>
@@ -288,7 +387,10 @@ export default async function HomePage({
               <h3 className="mb-6 border-b border-border pb-3 text-[10px] font-mono uppercase tracking-widest text-brand">SKILLS</h3>
               <ul className="space-y-4">
                 {skills.map((item, i) => (
-                  <li key={i} className="flex items-start gap-3 text-sm text-foreground/80 md:text-base"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" /><span>{item}</span></li>
+                  <li key={i} className="flex items-start gap-3 text-sm text-foreground/80 md:text-base">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+                    <span>{item}</span>
+                  </li>
                 ))}
               </ul>
             </div>
@@ -296,7 +398,10 @@ export default async function HomePage({
               <h3 className="mb-6 border-b border-border pb-3 text-[10px] font-mono uppercase tracking-widest text-brand">PRINCIPLES</h3>
               <ul className="space-y-4">
                 {principles.map((item, i) => (
-                  <li key={i} className="flex items-start gap-3 text-sm text-foreground/80 md:text-base"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" /><span>{item}</span></li>
+                  <li key={i} className="flex items-start gap-3 text-sm text-foreground/80 md:text-base">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+                    <span>{item}</span>
+                  </li>
                 ))}
               </ul>
             </div>
@@ -313,7 +418,10 @@ export default async function HomePage({
           <div className="grid gap-10 md:grid-cols-4">
             {processSteps.map((step, i) => (
               <div key={step} className="relative">
-                <div className="mb-4 flex items-center gap-3"><span className="text-[10px] font-mono text-brand">0{i + 1}</span><span className="h-px flex-1 bg-border" /></div>
+                <div className="mb-4 flex items-center gap-3">
+                  <span className="text-[10px] font-mono text-brand">0{i + 1}</span>
+                  <span className="h-px flex-1 bg-border" />
+                </div>
                 <h3 className="mb-3 text-lg font-semibold md:text-xl">{tProcess(`steps.${step}.title`)}</h3>
                 <p className="text-sm leading-relaxed text-muted">{tProcess(`steps.${step}.description`)}</p>
               </div>
