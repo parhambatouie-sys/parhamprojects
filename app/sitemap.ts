@@ -1,34 +1,63 @@
-import { MetadataRoute } from "next";
-import { posts } from "@/lib/posts";
+import { MetadataRoute } from 'next';
+import { query } from '@/lib/db';
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://parhamprojects.vercel.app";
-  const staticPages = ["", "/blog", "/order"];
-  const sitemapEntries: MetadataRoute.Sitemap = [];
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = 'https://parhamprojects.vercel.app';
+  const locales = ['fa', 'en'];
 
-  staticPages.forEach((page) => {
-    sitemapEntries.push({
-      url: `${baseUrl}/fa${page}`,
+  // ۱. صفحات استاتیک اصلی
+  const staticPages = locales.flatMap((locale) => [
+    {
+      url: `${baseUrl}/${locale}`,
       lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: page === "" ? 1 : 0.8,
-      alternates: {
-        languages: { "fa-IR": `${baseUrl}/fa${page}`, "en": `${baseUrl}/en${page}` },
-      },
-    });
-  });
-
-  posts.forEach((post) => {
-    sitemapEntries.push({
-      url: `${baseUrl}/fa/blog/${post.slug}`,
-      lastModified: new Date(post.date),
-      changeFrequency: "monthly",
+      changeFrequency: 'weekly' as const,
+      priority: 1,
+    },
+    {
+      url: `${baseUrl}/${locale}/blog`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/${locale}/order`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
       priority: 0.7,
-      alternates: {
-        languages: { "fa-IR": `${baseUrl}/fa/blog/${post.slug}`, "en": `${baseUrl}/en/blog/${post.slug}` },
-      },
-    });
-  });
+    },
+  ]);
 
-  return sitemapEntries;
+  // ۲. دریافت نمونه‌کارها از دیتابیس
+  let projectPages: MetadataRoute.Sitemap = [];
+  try {
+    const projectsResult = await query('SELECT id, created_at FROM projects WHERE is_published = true');
+    projectPages = projectsResult.rows.flatMap((project: any) => 
+      locales.map((locale) => ({
+        url: `${baseUrl}/${locale}/work/${project.id}`,
+        lastModified: new Date(project.created_at),
+        changeFrequency: 'monthly' as const,
+        priority: 0.6,
+      }))
+    );
+  } catch (error) {
+    console.error("Sitemap Projects Error:", error);
+  }
+
+  // ۳. دریافت مقالات وبلاگ از دیتابیس
+  let postPages: MetadataRoute.Sitemap = [];
+  try {
+    const postsResult = await query('SELECT slug, created_at FROM posts WHERE is_published = true');
+    postPages = postsResult.rows.flatMap((post: any) => 
+      locales.map((locale) => ({
+        url: `${baseUrl}/${locale}/blog/${post.slug}`,
+        lastModified: new Date(post.created_at),
+        changeFrequency: 'weekly' as const,
+        priority: 0.8,
+      }))
+    );
+  } catch (error) {
+    console.error("Sitemap Posts Error:", error);
+  }
+
+  return [...staticPages, ...projectPages, ...postPages];
 }

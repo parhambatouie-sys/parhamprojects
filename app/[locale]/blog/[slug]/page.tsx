@@ -17,12 +17,16 @@ export async function generateMetadata({
   const baseUrl = "https://parhamprojects.vercel.app";
   
   try {
-    const result = await query("SELECT title, excerpt, seo_title, seo_description FROM posts WHERE slug = $1", [slug]);
+    const result = await query("SELECT title, excerpt, seo_title, seo_description, image_url FROM posts WHERE slug = $1", [slug]);
     if (result.rows.length > 0) {
       const post = result.rows[0];
+      const title = post.seo_title || post.title;
+      const description = post.seo_description || post.excerpt;
+      const image = post.image_url || "/og-image.png";
+
       return {
-        title: post.seo_title || post.title,
-        description: post.seo_description || post.excerpt,
+        title: title,
+        description: description,
         alternates: {
           canonical: `${baseUrl}/${locale}/blog/${slug}`,
           languages: {
@@ -30,6 +34,20 @@ export async function generateMetadata({
             "en": `${baseUrl}/en/blog/${slug}`,
             "x-default": `${baseUrl}/en/blog/${slug}`,
           },
+        },
+        openGraph: {
+          title: title,
+          description: description,
+          url: `${baseUrl}/${locale}/blog/${slug}`,
+          images: [{ url: image, width: 1200, height: 630, alt: title }],
+          type: "article",
+          locale: locale === "fa" ? "fa_IR" : "en_US",
+        },
+        twitter: {
+          card: "summary_large_image",
+          title: title,
+          description: description,
+          images: [image],
         },
       };
     }
@@ -63,9 +81,23 @@ export default async function BlogPostPage({
     "@type": "BlogPosting",
     headline: post.title,
     description: post.excerpt,
+    image: post.image_url || "https://parhamprojects.vercel.app/og-image.png",
     datePublished: post.created_at,
+    dateModified: post.created_at,
     inLanguage: locale === "fa" ? "fa-IR" : "en",
-    author: { "@type": "Person", name: post.author },
+    author: { "@type": "Person", name: post.author, url: "https://parhamprojects.vercel.app" },
+    publisher: {
+      "@type": "Organization",
+      name: "Parham Batouie",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://parhamprojects.vercel.app/og-image.png"
+      }
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `https://parhamprojects.vercel.app/${locale}/blog/${post.slug}`
+    }
   };
 
   return (
@@ -80,7 +112,6 @@ export default async function BlogPostPage({
       <main className="min-h-screen pt-32 pb-24 md:pt-44 md:pb-32 relative">
         <div className="mx-auto max-w-4xl px-6">
           
-          {/* Back Button */}
           <Link
             href={`/${locale}/blog`}
             className="mb-12 inline-flex items-center gap-2 text-sm font-medium text-muted transition hover:text-brand"
@@ -89,7 +120,6 @@ export default async function BlogPostPage({
             {t("backToBlog")}
           </Link>
 
-          {/* Header */}
           <div className="mb-12 md:mb-16">
             <div className="mb-6 flex items-center gap-4">
               <span className="rounded-full border border-brand/30 bg-brand/10 px-4 py-1.5 text-[10px] font-mono tracking-widest text-brand uppercase">
@@ -115,7 +145,6 @@ export default async function BlogPostPage({
             </div>
           </div>
 
-          {/* Cover Image */}
           {post.image_url && (
             <div className="relative mb-16 md:mb-24 aspect-video w-full overflow-hidden rounded-3xl border border-white/5 bg-black/40 shadow-2xl">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -123,7 +152,6 @@ export default async function BlogPostPage({
             </div>
           )}
 
-          {/* Content Container (relative for signature) */}
           <div className="relative">
             <div className="prose prose-invert prose-lg max-w-none text-muted leading-[2] md:leading-[2.3]">
               {post.content.split("\n\n").map((paragraph: string, index: number) => {
@@ -142,7 +170,6 @@ export default async function BlogPostPage({
               })}
             </div>
 
-            {/* Signature Overlay at the bottom of the content */}
             <div className="pointer-events-none absolute bottom-0 end-0 opacity-20 mix-blend-screen pb-4 pe-4 md:pb-8 md:pe-8">
               <div
                 className="signature-mask h-24 w-48 md:h-32 md:w-64"
@@ -154,7 +181,6 @@ export default async function BlogPostPage({
             </div>
           </div>
 
-          {/* Minimal CTA Section */}
           <div className="mt-32 pt-10 border-t border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-12">
             <div>
               <h2 className="text-2xl font-bold text-foreground md:text-3xl">
