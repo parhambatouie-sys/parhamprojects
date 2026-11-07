@@ -60,7 +60,9 @@ export async function generateMetadata({
     
     const settings = result.rows.reduce(
       (acc: any, row: any) => {
-        return {
+        return {        verification: {
+      google: `<meta name="google-site-verification" content="aH2hxDMnztrFcsdqC5tPwZE50C5NvsV7jRNIq_9BRxs" />`,
+    },
           ...acc,
           [row.key]: row.value
         };
