@@ -26,33 +26,26 @@ async function editMessage(chatId: string | number, messageId: number, text: str
   });
 }
 
-// 🛠️ تابع جادویی برای پاک کردن متن‌های تکراری
+// 🛠️ تابع ضدتکرار (این بار بسیار امن و هوشمند)
 function cleanDuplicateContent(content: string): string {
   if (!content) return content;
   
-  const paragraphs = content.split('\n\n');
-  const uniqueParagraphs: string[] = [];
+  // ۱. حذف عکس‌هایی که هوش مصنوعی ممکن است داخل متن گذاشته باشد
+  let cleaned = content.replace(/!\[.*?\]\(.*?\)/g, '').replace(/<img[^>]*>/g, '').trim();
   
-  for (const p of paragraphs) {
-    // اگر پاراگراف خالی بود یا دقیقاً برابر با پاراگراف قبلی بود، نادیده بگیر
-    if (p.trim() === "") continue;
-    if (uniqueParagraphs.length > 0 && uniqueParagraphs[uniqueParagraphs.length - 1].trim() === p.trim()) continue;
-    uniqueParagraphs.push(p);
-  }
-  
-  // اگر تعداد پاراگراف‌ها زوج باشد، بررسی می‌کنیم آیا نصف دوم دقیقاً تکرار نصف اول است
-  if (uniqueParagraphs.length > 4 && uniqueParagraphs.length % 2 === 0) {
-    const half = uniqueParagraphs.length / 2;
-    const firstHalf = uniqueParagraphs.slice(0, half).join('\n\n');
-    const secondHalf = uniqueParagraphs.slice(half).join('\n\n');
+  // ۲. بررسی تکرار نصف به نصف
+  const half = Math.floor(cleaned.length / 2);
+  if (half > 200) {
+    const firstHalf = cleaned.substring(0, half).trim();
+    const secondHalf = cleaned.substring(half).trim();
     
-    // اگر ۱۰۰ کاراکتر اول هر دو نصف یکسان بود، یعنی کل متن تکرار شده است
-    if (firstHalf.substring(0, 100) === secondHalf.substring(0, 100)) {
-      return firstHalf; 
+    // اگر ۱۵۰ کاراکتر اول هر دو نصف دقیقاً یکسان بود، یعنی متن دو بار نوشته شده
+    if (firstHalf.substring(0, 150) === secondHalf.substring(0, 150)) {
+      return firstHalf; // فقط نصف اول را برگردان
     }
   }
   
-  return uniqueParagraphs.join('\n\n');
+  return cleaned;
 }
 
 export async function POST(request: Request) {
@@ -63,9 +56,7 @@ export async function POST(request: Request) {
 
     if (!token || !myChatId) return NextResponse.json({ error: "Missing config" }, { status: 500 });
 
-    // ==========================================
-    // بخش اول: بررسی دکمه‌های شیشه‌ای (Callback Query)
-    // ==========================================
+    // بخش اول: بررسی دکمه‌های شیشه‌ای
     if (body.callback_query) {
       const { data, message } = body.callback_query;
       const chatId = message.chat.id;
@@ -75,7 +66,6 @@ export async function POST(request: Request) {
 
       await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: body.callback_query.id }) });
 
-      // پردازش دکمه‌های تایید/رد سفارش
       if (data.startsWith("order_")) {
         const parts = data.split("_");
         const action = parts[1];
@@ -88,10 +78,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true });
       }
 
-      // ۱. انتخاب زبان
       if (data.startsWith("lang_")) {
         const lang = data.split("_")[1];
-        
         const stateRes = await query("SELECT prompt FROM tg_state WHERE chat_id = $1", [chatId.toString()]);
         if (stateRes.rows.length === 0) {
           await editMessage(chatId, messageId, "❌ موضوع پیدا نشد. لطفاً دوباره پیام بدهید.");
@@ -118,19 +106,12 @@ export async function POST(request: Request) {
 
         await query("UPDATE tg_state SET image_prompt = $1 WHERE chat_id = $2", [imagePrompt, chatId.toString()]);
 
-        await editMessage(
-          chatId, 
-          messageId, 
-          `✅ زبان انتخاب شد: ${lang === 'fa' ? 'فارسی' : 'انگلیسی'}\n\n🎨 **پرامپت عکس:**\n\n\`${imagePrompt}\`\n\n📸 حالا عکس تولید شده (16:9) را برای من ارسال کنید:`
-        );
+        await editMessage(chatId, messageId, `✅ زبان انتخاب شد: ${lang === 'fa' ? 'فارسی' : 'انگلیسی'}\n\n🎨 **پرامپت عکس:**\n\n\`${imagePrompt}\`\n\n📸 حالا عکس تولید شده (16:9) را برای من ارسال کنید:`);
         return NextResponse.json({ ok: true });
       }
 
-      // ۲. انتخاب زمان انتشار
       if (data.startsWith("time_")) {
         const timeChoice = data.split("_")[1];
-        
-        // خواندن و پاک کردن همزمان از دیتابیس
         const stateRes = await query("DELETE FROM tg_state WHERE chat_id = $1 RETURNING *", [chatId.toString()]);
         
         if (stateRes.rows.length === 0 || !stateRes.rows[0].post_data) {
@@ -165,9 +146,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // ==========================================
     // بخش دوم: دریافت پیام‌های متنی و عکس
-    // ==========================================
     if (body.message) {
       const chatId = body.message.chat.id;
       const text = body.message.text;
@@ -175,7 +154,6 @@ export async function POST(request: Request) {
 
       if (chatId.toString() !== myChatId) return NextResponse.json({ ok: true });
 
-      // اگر عکس فرستاد
       if (photo) {
         const stateRes = await query("SELECT * FROM tg_state WHERE chat_id = $1", [chatId.toString()]);
         if (stateRes.rows.length === 0 || !stateRes.rows[0].language) {
@@ -210,18 +188,16 @@ export async function POST(request: Request) {
 
           await sendMessage(chatId, "✍️ اطلاعات دریافت شد. در حال نوشتن مقاله...");
 
-          // پرامپت بسیار سخت‌گیرانه
           const systemPrompt = `You are an expert SEO copywriter and technical content creator. 
           Write a highly engaging, technically accurate, and SEO-optimized blog post in ${lang === 'fa' ? 'Persian (Farsi)' : 'English'} based on this topic: "${prompt}".
           
           ${searchContext ? `Here is some real-time information from the web about this topic:\n${searchContext}\n\nUse this information to ensure your article is up-to-date and accurate.` : ''}
           
           CRITICAL RULES:
-          1. WRITE THE ARTICLE EXACTLY ONCE. DO NOT REPEAT TEXT AT THE END. STOP IMMEDIATELY AFTER THE CONCLUSION.
-          2. The "slug" MUST BE WRITTEN IN ENGLISH LETTERS ONLY (e.g., "benefits-of-ai"). Do not use Persian characters for the slug.
-          3. Structure: H1 title, Introduction, Body with H2 and H3 headings, FAQ (3-6 questions), Conclusion.
-          4. NO FAKE DATA.
-          5. Length: MAXIMUM 800 WORDS. Be concise.
+          1. Write the article exactly ONCE. Do not repeat the title, introduction, or any paragraphs.
+          2. Use Markdown format (## for H2, ### for H3).
+          3. The "slug" MUST BE IN ENGLISH LETTERS ONLY.
+          4. Length: approx 800-1200 words.
           
           You MUST respond strictly with a valid JSON object containing exactly these keys:
           "title", "slug", "excerpt", "content", "category", "seo_title", "seo_description".
@@ -233,8 +209,8 @@ export async function POST(request: Request) {
               model: "openai/gpt-oss-120b", 
               messages: [{ role: "user", content: systemPrompt }], 
               temperature: 0.7, 
-              frequency_penalty: 1.0, // 👈 افزایش جریمه تکرار به حداکثر
-              presence_penalty: 0.6,  // 👈 جریمه شروع موضوعات تکراری
+              frequency_penalty: 1.0, // حداکثر جریمه برای تکرار
+              presence_penalty: 0.6,
               response_format: { type: "json_object" } 
             })
           });
@@ -244,7 +220,7 @@ export async function POST(request: Request) {
 
           const postData = JSON.parse(aiData.choices[0].message.content);
           
-          // 👈 پاکسازی متن از تکرار با تابع جادویی
+          // اجرای تابع ضدتکرار روی متن مقاله
           if (postData.content) {
             postData.content = cleanDuplicateContent(postData.content);
           }
@@ -262,7 +238,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true });
       }
 
-      // اگر متن فرستاد
       if (text) {
         await query(`
           CREATE TABLE IF NOT EXISTS tg_state (
