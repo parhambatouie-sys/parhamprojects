@@ -265,7 +265,7 @@ export default async function HomePage({
                     )}
                     <div className="mt-auto pt-4 border-t border-white/[0.06]">
                       {project.project_url ? (
-                        <Link href={project.project_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs font-semibold text-foreground transition-colors hover:text-brand md:text-sm">
+                       <Link href={`/${locale}/work/${project.id}`} className="inline-flex items-center gap-2 text-xs font-semibold text-foreground transition-colors hover:text-brand md:text-sm">
                           {locale === 'fa' ? 'مشاهده پروژه' : 'View Project'}
                           <span className="rtl:rotate-180 transition-transform duration-300 group-hover:translate-x-1">→</span>
                         </Link>
