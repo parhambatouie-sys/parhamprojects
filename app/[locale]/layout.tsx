@@ -61,9 +61,7 @@ export async function generateMetadata({
     
     const settings = result.rows.reduce(
       (acc: any, row: any) => {
-        return {        verification: {
-      google: `<meta name="google-site-verification" content="aH2hxDMnztrFcsdqC5tPwZE50C5NvsV7jRNIq_9BRxs" />`,
-    },
+        return {
           ...acc,
           [row.key]: row.value
         };
@@ -111,6 +109,10 @@ export async function generateMetadata({
     ],
     creator: "Parham Batouie",
     metadataBase: new URL(baseUrl),
+    // 👈 کد تایید گوگل را به جای درست خودش منتقل کردم
+    verification: {
+      google: "aH2hxDMnztrFcsdqC5tPwZE50C5NvsV7jRNIq_9BRxs",
+    },
     alternates: {
       canonical: `${baseUrl}/${locale}`,
       languages: {
@@ -217,7 +219,7 @@ export default async function LocaleLayout({
       <head>
         
         {/* ==================================================================== */}
-        {/* اسکریپت داده‌های ساختاریافته (این بخش را به هیچ عنوان پاک نکنید) */}
+        {/* اسکریپت داده‌های ساختاریافته */}
         {/* ==================================================================== */}
         <script
           type="application/ld+json"
@@ -227,9 +229,7 @@ export default async function LocaleLayout({
         />
 
         {/* ==================================================================== */}
-        {/* ⚠️ محل قرارگیری کدهای اضافی شما (کدهای شخصی خودتان) */}
-        {/* ⚠️ اگر کد Google Analytics، Google Tag Manager یا متاتگ‌های دیگری داشتید، */}
-        {/* ⚠️ دقیقاً در همین قسمت (زیر این کامنت) کپی و پیست کنید تا پاک نشوند. */}
+        {/* ⚠️ محل قرارگیری کدهای اضافی شما */}
         {/* ==================================================================== */}
         
         {/* 
@@ -241,14 +241,13 @@ export default async function LocaleLayout({
       </head>
       
       <body>
+        {/* 👈 فقط و فقط یک بار این خط باید وجود داشته باشد */}
         <NextIntlClientProvider>
           {children}
         </NextIntlClientProvider>
 
         {/* ==================================================================== */}
         {/* ⚠️ محل قرارگیری اسکریپت‌های انتهای body */}
-        {/* ⚠️ اگر اسکریپت‌هایی مثل پشتیبانی آنلاین، چت باکس یا کدهای جاوااسکریپت */}
-        {/* ⚠️ نیاز به قرارگیری در انتهای body دارند، اینجا قرار دهید. */}
         {/* ==================================================================== */}
 
         {/* 
@@ -256,8 +255,6 @@ export default async function LocaleLayout({
           [اسکریپت‌های شخصی شما اینجا قرار می‌گیرند]
           
         */}
-        
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
         
         {/* کد گوگل آنالیتیکس */}
         <GoogleAnalytics gaId="G-CEMVY7WLCT" />
