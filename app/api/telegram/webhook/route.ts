@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { reviewArticle } from "@/lib/gemini"; // ایمپورت تابع جمینای
 // @ts-ignore
 import { search, SafeSearchType } from "duck-duck-scrape";
 
@@ -84,8 +85,12 @@ export async function POST(request: Request) {
       // پاسخ فوری به تلگرام برای جلوگیری از ارسال درخواست تکراری
       await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, { 
         method: "POST", 
-        headers: { "Content-Type": "application/json" }, 
-        body: JSON.stringify({ callback_query_id: body.callback_query.id }) 
+        headers: { 
+          "Content-Type": "application/json" 
+        }, 
+        body: JSON.stringify({ 
+          callback_query_id: body.callback_query.id 
+        }) 
       });
 
       // ----------------------------------------------------------------------
@@ -141,7 +146,9 @@ export async function POST(request: Request) {
           },
           body: JSON.stringify({ 
             model: "openai/gpt-oss-120b", 
-            messages: [{ role: "user", content: promptSystem }], 
+            messages: [
+              { role: "user", content: promptSystem }
+            ], 
             temperature: 0.7 
           })
         });
@@ -188,10 +195,24 @@ export async function POST(request: Request) {
 
         const isPublished = timeChoice === "now" ? true : false;
         
-        // 👈 ذخیره امتیاز جمینای در دیتابیس
+        // ذخیره امتیاز جمینای در دیتابیس
         const dbResult = await query(
-          `INSERT INTO posts (title, slug, excerpt, content, category, author, seo_title, seo_description, image_url, locale, is_published, created_at, ai_score, review_feedback) 
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id`,
+          `INSERT INTO posts (
+            title, 
+            slug, 
+            excerpt, 
+            content, 
+            category, 
+            author, 
+            seo_title, 
+            seo_description, 
+            image_url, 
+            locale, 
+            is_published, 
+            created_at, 
+            ai_score, 
+            review_feedback
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id`,
           [
             postData.title, 
             postData.slug, 
@@ -233,58 +254,52 @@ export async function POST(request: Request) {
         const postData = JSON.parse(stateRes.rows[0].post_data);
         await editMessage(chatId, messageId, "🧐 در حال بررسی دقیق مقاله توسط جمینای (سئو، ساختار و عمق)...");
 
-        // 👈 اضافه کردن هدر امنیتی برای عبور از proxy.ts
-        const reviewRes = await fetch("https://parhamprojects.vercel.app/api/admin/review", {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "x-internal-bot-auth": token
-          },
-          body: JSON.stringify({ 
-            title: postData.title, 
-            content: postData.content, 
-            action: "review" 
-          })
-        });
-
-        const reviewData = await reviewRes.json();
-        if (!reviewRes.ok) {
-          throw new Error(reviewData.error || "Review failed");
-        }
-
-        const score = reviewData.score;
-        const feedback = reviewData.feedback;
-
-        postData.ai_score = score;
-        postData.ai_feedback = feedback;
-
-        if (score >= 8) {
-          await query("UPDATE tg_state SET post_data = $1 WHERE chat_id = $2", [JSON.stringify(postData), chatId.toString()]);
+        try {
+          // صدا زدن مستقیم تابع جمینای
+          const reviewData = await reviewArticle(postData.title, postData.content, "review");
           
-          await editMessage(
-            chatId, 
-            messageId, 
-            `✅ **مقاله نمره ${score} از ۱۰ را گرفت!**\n\nنقاط قوت: عالی!\n\n👇 آماده انتشار است:`, 
-            {
-              inline_keyboard: [
-                [{ text: "🚀 تایید و انتشار نهایی", callback_data: `time_now` }],
-                [{ text: "🔗 مشاهده پیش‌نمایش", url: `https://parhamprojects.vercel.app/${stateRes.rows[0].language}/blog/${encodeURIComponent(postData.slug)}` }]
-              ]
-            }
-          );
-        } else {
-          await query("UPDATE tg_state SET post_data = $1 WHERE chat_id = $2", [JSON.stringify(postData), chatId.toString()]);
-          
-          await editMessage(
-            chatId, 
-            messageId, 
-            `⚠️ **مقاله نمره ${score} از ۱۰ را گرفت.**\n\nدلایل ضعف:\n${feedback}\n\n👇 برای بازنویسی دقیق کلیک کنید:`, 
-            {
-              inline_keyboard: [
-                [{ text: "🔄 بازنویسی دقیق با جمینای", callback_data: `rewrite_ai_${postId}` }],
-              ]
-            }
-          );
+          const score = reviewData.score;
+          const feedback = reviewData.feedback;
+
+          postData.ai_score = score;
+          postData.ai_feedback = feedback;
+
+          if (score >= 8) {
+            await query("UPDATE tg_state SET post_data = $1 WHERE chat_id = $2", [JSON.stringify(postData), chatId.toString()]);
+            
+            await editMessage(
+              chatId, 
+              messageId, 
+              `✅ **مقاله نمره ${score} از ۱۰ را گرفت!**\n\nنقاط قوت: عالی!\n\n👇 آماده انتشار است:`, 
+              {
+                inline_keyboard: [
+                  [
+                    { text: "🚀 تایید و انتشار نهایی", callback_data: `time_now` }
+                  ],
+                  [
+                    { text: "🔗 مشاهده پیش‌نمایش", url: `https://parhamprojects.vercel.app/${stateRes.rows[0].language}/blog/${encodeURIComponent(postData.slug)}` }
+                  ]
+                ]
+              }
+            );
+          } else {
+            await query("UPDATE tg_state SET post_data = $1 WHERE chat_id = $2", [JSON.stringify(postData), chatId.toString()]);
+            
+            await editMessage(
+              chatId, 
+              messageId, 
+              `⚠️ **مقاله نمره ${score} از ۱۰ را گرفت.**\n\nدلایل ضعف:\n${feedback}\n\n👇 برای بازنویسی دقیق کلیک کنید:`, 
+              {
+                inline_keyboard: [
+                  [
+                    { text: "🔄 بازنویسی دقیق با جمینای", callback_data: `rewrite_ai_${postId}` }
+                  ],
+                ]
+              }
+            );
+          }
+        } catch (error: any) {
+          await editMessage(chatId, messageId, `❌ خطا در بررسی مقاله:\n${error.message}\n\nآیا کلید GEMINI_API_KEY در ورسل درست تنظیم شده است؟`);
         }
         return NextResponse.json({ ok: true });
       }
@@ -304,44 +319,35 @@ export async function POST(request: Request) {
         const postData = JSON.parse(stateRes.rows[0].post_data);
         await editMessage(chatId, messageId, "🔄 در حال بازنویسی مقاله توسط جمینای...");
 
-        // 👈 اضافه کردن هدر امنیتی برای عبور از proxy.ts
-        const rewriteRes = await fetch("https://parhamprojects.vercel.app/api/admin/review", {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "x-internal-bot-auth": token 
-          },
-          body: JSON.stringify({ 
-            title: postData.title, 
-            content: postData.content, 
-            action: "rewrite" 
-          })
-        });
+        try {
+          // صدا زدن مستقیم تابع جمینای
+          const rewriteData = await reviewArticle(postData.title, postData.content, "rewrite");
 
-        const rewriteData = await rewriteRes.json();
-        if (!rewriteRes.ok) {
-          throw new Error(rewriteData.error || "Rewrite failed");
+          postData.title = rewriteData.rewritten_title;
+          postData.content = rewriteData.rewritten_content;
+          postData.ai_score = 0; 
+          postData.ai_feedback = null; 
+
+          await query("UPDATE tg_state SET post_data = $1 WHERE chat_id = $2", [JSON.stringify(postData), chatId.toString()]);
+
+          await editMessage(
+            chatId, 
+            messageId, 
+            `✅ **بازنویسی انجام شد!**\n\nحالا می‌توانید نسخه جدید را منتشر کنید یا دوباره بررسی کنید.`, 
+            {
+              inline_keyboard: [
+                [
+                  { text: "🧐 بررسی مجدد با جمینای", callback_data: `review_ai_${postId}` }
+                ],
+                [
+                  { text: "🚀 انتشار نسخه بازنویسی شده", callback_data: `time_now` }
+                ],
+              ]
+            }
+          );
+        } catch (error: any) {
+          await editMessage(chatId, messageId, `❌ خطا در بازنویسی مقاله:\n${error.message}`);
         }
-
-        // 👈 به‌روزرسانی متن و صفر کردن امتیاز قبلی
-        postData.title = rewriteData.rewritten_title;
-        postData.content = rewriteData.rewritten_content;
-        postData.ai_score = 0; 
-        postData.ai_feedback = null; 
-
-        await query("UPDATE tg_state SET post_data = $1 WHERE chat_id = $2", [JSON.stringify(postData), chatId.toString()]);
-
-        await editMessage(
-          chatId, 
-          messageId, 
-          `✅ **بازنویسی انجام شد!**\n\nحالا می‌توانید نسخه جدید را منتشر کنید یا دوباره بررسی کنید.`, 
-          {
-            inline_keyboard: [
-              [{ text: "🧐 بررسی مجدد با جمینای", callback_data: `review_ai_${postId}` }],
-              [{ text: "🚀 انتشار نسخه بازنویسی شده", callback_data: `time_now` }],
-            ]
-          }
-        );
         return NextResponse.json({ ok: true });
       }
     }
@@ -391,7 +397,10 @@ export async function POST(request: Request) {
           
           let searchContext = "";
           try {
-            const searchResults = await search(prompt, { safeSearch: SafeSearchType.MODERATE });
+            const searchResults = await search(prompt, { 
+              safeSearch: SafeSearchType.MODERATE 
+            });
+            
             searchContext = searchResults.results
               .slice(0, 5)
               .map(r => `Title: ${r.title}\nSnippet: ${r.description}`)
@@ -425,7 +434,9 @@ export async function POST(request: Request) {
             },
             body: JSON.stringify({ 
               model: "openai/gpt-oss-120b", 
-              messages: [{ role: "user", content: systemPrompt }], 
+              messages: [
+                { role: "user", content: systemPrompt }
+              ], 
               temperature: 0.5, 
               frequency_penalty: 1.5,
               response_format: { type: "json_object" } 
@@ -446,8 +457,12 @@ export async function POST(request: Request) {
             `📝 **پیش‌نمایش مقاله:**\n\n📌 عنوان: ${postData.title}\n📄 خلاصه: ${postData.excerpt}\n\n👇 **چه کاری انجام دهیم؟**`, 
             {
               inline_keyboard: [
-                [{ text: "🧐 بررسی با جمینای (امتیازدهی)", callback_data: `review_ai_${Date.now()}` }],
-                [{ text: "🚀 انتشار مستقیم (بدون بررسی)", callback_data: `time_now` }],
+                [
+                  { text: "🧐 بررسی با جمینای (امتیازدهی)", callback_data: `review_ai_${Date.now()}` }
+                ],
+                [
+                  { text: "🚀 انتشار مستقیم (بدون بررسی)", callback_data: `time_now` }
+                ],
               ]
             }
           );
@@ -473,9 +488,20 @@ export async function POST(request: Request) {
 
         // ذخیره موضوع جدید
         await query(`
-          INSERT INTO tg_state (chat_id, prompt, language, image_prompt, image_url, post_data) 
-          VALUES ($1, $2, NULL, NULL, NULL, NULL) 
-          ON CONFLICT (chat_id) DO UPDATE SET prompt = $2, language = NULL, image_prompt = NULL, image_url = NULL, post_data = NULL;
+          INSERT INTO tg_state (
+            chat_id, 
+            prompt, 
+            language, 
+            image_prompt, 
+            image_url, 
+            post_data
+          ) VALUES ($1, $2, NULL, NULL, NULL, NULL) 
+          ON CONFLICT (chat_id) DO UPDATE SET 
+            prompt = $2, 
+            language = NULL, 
+            image_prompt = NULL, 
+            image_url = NULL, 
+            post_data = NULL;
         `, [chatId.toString(), text]);
 
         await sendMessage(
@@ -483,7 +509,10 @@ export async function POST(request: Request) {
           `🌐 لطفاً زبان مقاله را انتخاب کنید:\n\n📝 موضوع: ${text}`, 
           {
             inline_keyboard: [
-              [{ text: "🇮🇷 فارسی", callback_data: "lang_fa" }, { text: "🇬🇧 English", callback_data: "lang_en" }]
+              [
+                { text: "🇮🇷 فارسی", callback_data: "lang_fa" }, 
+                { text: "🇬🇧 English", callback_data: "lang_en" }
+              ]
             ]
           }
         );
