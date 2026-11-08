@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 
-// جلوگیری از کش شدن این مسیر
 export const dynamic = 'force-dynamic';
 
 /**
- * این API برای ساخت جداول دیتابیس استفاده می‌شود.
- * با هر بار باز کردن این لینک، مطمئن می‌شویم تمام جداول مورد نیاز وجود دارند.
+ * این API برای ساخت و آپدیت جداول دیتابیس استفاده می‌شود.
+ * با هر بار باز کردن این لینک، مطمئن می‌شویم تمام جداول و ستون‌های مورد نیاز وجود دارند.
  */
 export async function GET() {
   try {
@@ -69,19 +68,31 @@ export async function GET() {
     `);
 
     // ==========================================
-    // ۵. ساخت جدول وضعیت موقت ربات تلگرام
-    // این جدول برای ذخیره موضوع مقاله قبل از انتخاب زبان استفاده می‌شود
+    // ۵. ساخت جدول وضعیت موقت ربات تلگرام (tg_state)
+    // این جدول برای ذخیره موقت اطلاعات مقاله (موضوع، زبان، عکس و...) استفاده می‌شود
     // ==========================================
     await query(`
       CREATE TABLE IF NOT EXISTS tg_state (
         chat_id VARCHAR(50) PRIMARY KEY,
-        prompt TEXT
+        prompt TEXT,
+        language VARCHAR(5),
+        image_prompt TEXT,
+        image_url TEXT,
+        post_data TEXT
       );
     `);
 
+    // ==========================================
+    // ۶. افزودن ستون‌های جدید به جدول tg_state (اگر از قبل وجود داشته باشد)
+    // ==========================================
+    await query(`ALTER TABLE tg_state ADD COLUMN IF NOT EXISTS language VARCHAR(5);`);
+    await query(`ALTER TABLE tg_state ADD COLUMN IF NOT EXISTS image_prompt TEXT;`);
+    await query(`ALTER TABLE tg_state ADD COLUMN IF NOT EXISTS image_url TEXT;`);
+    await query(`ALTER TABLE tg_state ADD COLUMN IF NOT EXISTS post_data TEXT;`);
+
     return NextResponse.json({ 
       success: true, 
-      message: "✅ تمام جداول دیتابیس (پروژه‌ها، خدمات، تنظیمات، مقالات و وضعیت تلگرام) با موفقیت آماده شدند." 
+      message: "✅ تمام جداول (پروژه‌ها، خدمات، تنظیمات، مقالات و وضعیت تلگرام) با موفقیت آماده شدند." 
     });
   } catch (error: any) {
     console.error("Setup API Error:", error);
