@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       // پردازش دکمه‌های تایید/رد سفارش
       // ------------------------------------------
       if (data.startsWith("order_")) {
-        const parts = data.split("_"); // order_accept_1 یا order_reject_1
+        const parts = data.split("_");
         const action = parts[1];
         const orderId = parts[2];
         const newStatus = action === "accept" ? "accepted" : "rejected";
@@ -56,12 +56,7 @@ export async function POST(request: Request) {
 
         await query("UPDATE orders SET status = $1 WHERE id = $2", [newStatus, orderId]);
         
-        // ویرایش پیام در تلگرام تا دکمه‌ها حذف شوند و وضعیت جدید نمایش داده شود
-        await editMessage(
-          chatId, 
-          messageId, 
-          `${message.text}\n\n👉 **وضعیت جدید: ${statusText}**`
-        );
+        await editMessage(chatId, messageId, `${message.text}\n\n👉 **وضعیت جدید: ${statusText}**`);
         
         await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: body.callback_query.id }) });
         return NextResponse.json({ ok: true });
@@ -82,9 +77,8 @@ export async function POST(request: Request) {
         const prompt = stateRes.rows[0].prompt;
         await query("UPDATE tg_state SET language = $1 WHERE chat_id = $2", [lang, chatId.toString()]);
 
-        await editMessage(chatId, messageId, `⏳ در حال تحلیل موضوع و ساخت پرامپت عکس با ابعاد استاندارد...`);
+        await editMessage(chatId, messageId, `⏳ در حال تحلیل موضوع و ساخت پرامپت عکس...`);
 
-        // اصلاح شد: زبان متن روی عکس با زبان انتخابی هماهنگ می‌شود
         const promptSystem = `Based on this blog topic: "${prompt}", write a short, descriptive English prompt (max 60 words) to generate a high-quality, modern, and professional cover image for a blog post. 
         IMPORTANT 1: The prompt MUST include the aspect ratio "16:9" or specify "wide format, 1920x1080 resolution". 
         IMPORTANT 2: The image MUST contain a prominent and readable text related to the topic. The text written ON the image MUST be in ${lang === 'fa' ? 'Persian (Farsi)' : 'English'} language.
@@ -132,6 +126,16 @@ export async function POST(request: Request) {
 
         const isPublished = timeChoice === "now" ? true : false;
         
+        // ⚠️ جلوگیری از ثبت دوباره (اگر کاربر دو بار کلیک کرد)
+        const checkExist = await query("SELECT id FROM posts WHERE slug = $1", [postData.slug]);
+        
+        if (checkExist.rows.length > 0) {
+          await editMessage(chatId, messageId, `⚠️ این مقاله قبلاً در سایت ثبت شده است.\n\n🔗 لینک:\nhttps://parhamprojects.vercel.app/${stateRes.rows[0].language}/blog/${encodeURIComponent(postData.slug)}`);
+          await query("DELETE FROM tg_state WHERE chat_id = $1", [chatId.toString()]);
+          await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: body.callback_query.id }) });
+          return NextResponse.json({ ok: true });
+        }
+
         const dbResult = await query(
           `INSERT INTO posts (title, slug, excerpt, content, category, author, seo_title, seo_description, image_url, locale, is_published, created_at) 
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
@@ -139,7 +143,8 @@ export async function POST(request: Request) {
         );
 
         const postId = dbResult.rows[0].id;
-        const previewUrl = `https://parhamprojects.vercel.app/${stateRes.rows[0].language}/blog/${postData.slug}`;
+        // ⚠️ انکود کردن لینک برای جلوگیری از خطای 404
+        const previewUrl = `https://parhamprojects.vercel.app/${stateRes.rows[0].language}/blog/${encodeURIComponent(postData.slug)}`;
         const statusText = timeChoice === "now" ? "منتشر شد!" : `زمان‌بندی شد برای ${publishAt ? publishAt.toLocaleString('fa-IR') : 'نامشخص'}`;
 
         await editMessage(chatId, messageId, `✅ **مقاله ${statusText}**\n\n🔗 لینک:\n${previewUrl}\n\n📌 شناسه: ${postId}`);
@@ -185,7 +190,7 @@ export async function POST(request: Request) {
           const prompt = stateRes.rows[0].prompt;
           const lang = stateRes.rows[0].language;
 
-          await sendMessage(chatId, "🔍 در حال جستجو در اینترنت برای پیدا کردن اطلاعات به‌روز و دقیق...");
+          await sendMessage(chatId, "🔍 در حال جستجو در اینترنت برای پیدا کردن اطلاعات به‌روز...");
 
           let searchContext = "";
           try {
@@ -193,24 +198,24 @@ export async function POST(request: Request) {
             searchContext = searchResults.results.slice(0, 5).map(r => `Title: ${r.title}\nSnippet: ${r.description}`).join('\n\n');
           } catch (e) {}
 
-          await sendMessage(chatId, "✍️ اطلاعات دریافت شد. در حال نوشتن و ساختاردهی مقاله با هوش مصنوعی...");
+          await sendMessage(chatId, "✍️ اطلاعات دریافت شد. در حال نوشتن مقاله...");
 
+          // ⚠️ اصلاح شد: تاکید شدید بر انگلیسی بودن Slug
           const systemPrompt = `You are an expert SEO copywriter and technical content creator. 
           Write a highly engaging, technically accurate, and SEO-optimized blog post in ${lang === 'fa' ? 'Persian (Farsi)' : 'English'} based on this topic: "${prompt}".
           
           ${searchContext ? `Here is some real-time information from the web about this topic:\n${searchContext}\n\nUse this information to ensure your article is up-to-date and accurate.` : ''}
           
           CRITICAL RULES:
-          1. NEVER repeat sentences, paragraphs, or sections. Write the article exactly once from start to finish.
-          2. Tone: Professional, friendly, and educational.
-          3. Structure: H1 title, Introduction, Body with H2 and H3 headings, FAQ (3-6 questions), and a Conclusion.
-          4. NO FAKE DATA: Do not invent statistics, quotes, or fake URLs.
-          5. SEO: Naturally use the main keyword in the title, intro, and headings.
-          6. Length: Aim for a comprehensive guide (approx 800-1200 words).
+          1. NEVER repeat sentences or paragraphs. Write the article once.
+          2. The "slug" MUST BE WRITTEN IN ENGLISH LETTERS ONLY (e.g., "benefits-of-ai"). Do not use Persian characters for the slug.
+          3. Structure: H1 title, Introduction, Body with H2 and H3 headings, FAQ (3-6 questions), Conclusion.
+          4. NO FAKE DATA.
+          5. Length: approx 800-1200 words.
           
           You MUST respond strictly with a valid JSON object containing exactly these keys:
           "title", "slug", "excerpt", "content", "category", "seo_title", "seo_description".
-          Do not include markdown code blocks like \`\`\`json. Just output the raw JSON.`;
+          Just output the raw JSON.`;
 
           const aiResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.GROQ_API_KEY}` },
@@ -218,7 +223,7 @@ export async function POST(request: Request) {
               model: "openai/gpt-oss-120b", 
               messages: [{ role: "user", content: systemPrompt }], 
               temperature: 0.7, 
-              frequency_penalty: 0.6, // جلوگیری از تکرار متن
+              frequency_penalty: 0.6,
               response_format: { type: "json_object" } 
             })
           });
