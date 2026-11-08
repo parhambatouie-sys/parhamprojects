@@ -6,7 +6,9 @@ import { search, SafeSearchType } from "duck-duck-scrape";
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-// تابع کمکی برای ارسال پیام
+// =========================================================================
+// توابع کمکی برای ارتباط با تلگرام
+// =========================================================================
 async function sendMessage(chatId: string | number, text: string, replyMarkup?: any) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -16,7 +18,6 @@ async function sendMessage(chatId: string | number, text: string, replyMarkup?: 
   });
 }
 
-// تابع کمکی برای ویرایش پیام
 async function editMessage(chatId: string | number, messageId: number, text: string, replyMarkup?: any) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   await fetch(`https://api.telegram.org/bot${token}/editMessageText`, {
@@ -26,6 +27,9 @@ async function editMessage(chatId: string | number, messageId: number, text: str
   });
 }
 
+// =========================================================================
+// پردازشگر اصلی وب‌هوک تلگرام
+// =========================================================================
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -35,18 +39,22 @@ export async function POST(request: Request) {
     if (!token || !myChatId) return NextResponse.json({ error: "Missing config" }, { status: 500 });
 
     // ==========================================
-    // بخش اول: بررسی دکمه‌های شیشه‌ای
+    // بخش اول: بررسی دکمه‌های شیشه‌ای (Callback Query)
     // ==========================================
     if (body.callback_query) {
       const { data, message } = body.callback_query;
       const chatId = message.chat.id;
       const messageId = message.message_id;
 
+      // بررسی امنیتی: فقط خود شما اجازه کلیک دارید
       if (chatId.toString() !== myChatId) return NextResponse.json({ ok: true });
 
+      // پاسخ فوری به تلگرام برای جلوگیری از ارسال درخواست تکراری
       await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: body.callback_query.id }) });
 
-      // پردازش دکمه‌های سفارش
+      // ------------------------------------------
+      // ۱. پردازش دکمه‌های تایید/رد سفارش
+      // ------------------------------------------
       if (data.startsWith("order_")) {
         const parts = data.split("_");
         const action = parts[1];
@@ -59,9 +67,12 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true });
       }
 
-      // انتخاب زبان
+      // ------------------------------------------
+      // ۲. انتخاب زبان برای تولید مقاله
+      // ------------------------------------------
       if (data.startsWith("lang_")) {
         const lang = data.split("_")[1];
+        
         const stateRes = await query("SELECT prompt FROM tg_state WHERE chat_id = $1", [chatId.toString()]);
         if (stateRes.rows.length === 0) {
           await editMessage(chatId, messageId, "❌ موضوع پیدا نشد. لطفاً دوباره پیام بدهید.");
@@ -92,12 +103,17 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true });
       }
 
-      // انتخاب زمان انتشار
+      // ------------------------------------------
+      // ۳. انتخاب زمان انتشار و ثبت نهایی در دیتابیس
+      // ------------------------------------------
       if (data.startsWith("time_")) {
         const timeChoice = data.split("_")[1];
+        
+        // دریافت و پاک کردن همزمان اطلاعات از دیتابیس
         const stateRes = await query("DELETE FROM tg_state WHERE chat_id = $1 RETURNING *", [chatId.toString()]);
         
         if (stateRes.rows.length === 0 || !stateRes.rows[0].post_data) {
+          await editMessage(chatId, messageId, "❌ اطلاعات مقاله پیدا نشد. لطفاً دوباره تلاش کنید.");
           return NextResponse.json({ ok: true });
         }
 
@@ -114,10 +130,17 @@ export async function POST(request: Request) {
 
         const isPublished = timeChoice === "now" ? true : false;
         
+        // 👈 تغییر مهم: ذخیره امتیاز و بازخورد جمینای در دیتابیس
         const dbResult = await query(
-          `INSERT INTO posts (title, slug, excerpt, content, category, author, seo_title, seo_description, image_url, locale, is_published, created_at) 
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
-          [postData.title, postData.slug, postData.excerpt, postData.content, postData.category, "Parham Batouie", postData.seo_title, postData.seo_description, stateRes.rows[0].image_url, stateRes.rows[0].language, isPublished, publishAt]
+          `INSERT INTO posts (title, slug, excerpt, content, category, author, seo_title, seo_description, image_url, locale, is_published, created_at, ai_score, review_feedback) 
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id`,
+          [
+            postData.title, postData.slug, postData.excerpt, postData.content, 
+            postData.category, "Parham Batouie", postData.seo_title, postData.seo_description, 
+            stateRes.rows[0].image_url, stateRes.rows[0].language, isPublished, publishAt,
+            postData.ai_score || 0, 
+            postData.ai_feedback || null
+          ]
         );
 
         const postId = dbResult.rows[0].id;
@@ -128,9 +151,9 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true });
       }
 
-      // ==========================================
-      // بخش جدید: بررسی با جمینای
-      // ==========================================
+      // ------------------------------------------
+      // ۴. بررسی مقاله با جمینای (امتیازدهی)
+      // ------------------------------------------
       if (data.startsWith("review_ai_")) {
         const postId = data.split("_")[2];
         const stateRes = await query("SELECT * FROM tg_state WHERE chat_id = $1", [chatId.toString()]);
@@ -143,7 +166,7 @@ export async function POST(request: Request) {
         const postData = JSON.parse(stateRes.rows[0].post_data);
         await editMessage(chatId, messageId, "🧐 در حال بررسی دقیق مقاله توسط جمینای (سئو، ساختار و عمق)...");
 
-        // درخواست به API بررسی ما
+        // درخواست به API بررسی
         const reviewRes = await fetch("https://parhamprojects.vercel.app/api/admin/review", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -151,15 +174,17 @@ export async function POST(request: Request) {
         });
 
         const reviewData = await reviewRes.json();
-
         if (!reviewRes.ok) throw new Error(reviewData.error || "Review failed");
 
         const score = reviewData.score;
         const feedback = reviewData.feedback;
 
+        // 👈 ذخیره امتیاز و بازخورد در دیتابیس وضعیت
+        postData.ai_score = score;
+        postData.ai_feedback = feedback;
+
         if (score >= 8) {
-          // نمره بالا: تایید و انتشار
-          await query("UPDATE tg_state SET post_data = $1 WHERE chat_id = $2", [JSON.stringify({ ...postData, ai_score: score }), chatId.toString()]);
+          await query("UPDATE tg_state SET post_data = $1 WHERE chat_id = $2", [JSON.stringify(postData), chatId.toString()]);
           
           await editMessage(chatId, messageId, `✅ **مقاله نمره ${score} از ۱۰ را گرفت!**\n\nنقاط قوت: عالی!\n\n👇 آماده انتشار است:`, {
             inline_keyboard: [
@@ -168,7 +193,6 @@ export async function POST(request: Request) {
             ]
           });
         } else {
-          // نمره پایین: نیاز به بازنویسی
           await query("UPDATE tg_state SET post_data = $1 WHERE chat_id = $2", [JSON.stringify(postData), chatId.toString()]);
           
           await editMessage(chatId, messageId, `⚠️ **مقاله نمره ${score} از ۱۰ را گرفت.**\n\nدلایل ضعف:\n${feedback}\n\n👇 برای بازنویسی دقیق کلیک کنید:`, {
@@ -180,9 +204,9 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true });
       }
 
-      // ==========================================
-      // بخش جدید: بازنویسی با جمینای
-      // ==========================================
+      // ------------------------------------------
+      // ۵. بازنویسی مقاله با جمینای
+      // ------------------------------------------
       if (data.startsWith("rewrite_ai_")) {
         const postId = data.split("_")[2];
         const stateRes = await query("SELECT * FROM tg_state WHERE chat_id = $1", [chatId.toString()]);
@@ -202,22 +226,20 @@ export async function POST(request: Request) {
         });
 
         const rewriteData = await rewriteRes.json();
-
         if (!rewriteRes.ok) throw new Error(rewriteData.error || "Rewrite failed");
 
-        // ذخیره نسخه بازنویسی شده
-        const newPostData = {
-          ...postData,
-          title: rewriteData.rewritten_title,
-          content: rewriteData.rewritten_content
-        };
+        // 👈 به‌روزرسانی متن و صفر کردن امتیاز قبلی
+        postData.title = rewriteData.rewritten_title;
+        postData.content = rewriteData.rewritten_content;
+        postData.ai_score = 0; // ریست کردن امتیاز
+        postData.ai_feedback = null; // ریست کردن بازخورد
 
-        await query("UPDATE tg_state SET post_data = $1 WHERE chat_id = $2", [JSON.stringify(newPostData), chatId.toString()]);
+        await query("UPDATE tg_state SET post_data = $1 WHERE chat_id = $2", [JSON.stringify(postData), chatId.toString()]);
 
         await editMessage(chatId, messageId, `✅ **بازنویسی انجام شد!**\n\nحالا می‌توانید نسخه جدید را منتشر کنید یا دوباره بررسی کنید.`, {
           inline_keyboard: [
+            [{ text: "🧐 بررسی مجدد با جمینای", callback_data: `review_ai_${postId}` }],
             [{ text: "🚀 انتشار نسخه بازنویسی شده", callback_data: `time_now` }],
-            [{ text: "🧐 بررسی مجدد", callback_data: `review_ai_${postId}` }],
           ]
         });
         return NextResponse.json({ ok: true });
@@ -232,9 +254,12 @@ export async function POST(request: Request) {
       const text = body.message.text;
       const photo = body.message.photo;
 
+      // بررسی امنیتی
       if (chatId.toString() !== myChatId) return NextResponse.json({ ok: true });
 
-      // اگر عکس فرستاد
+      // ------------------------------------------
+      // دریافت عکس
+      // ------------------------------------------
       if (photo) {
         const stateRes = await query("SELECT * FROM tg_state WHERE chat_id = $1", [chatId.toString()]);
         if (stateRes.rows.length === 0 || !stateRes.rows[0].language) {
@@ -301,7 +326,7 @@ export async function POST(request: Request) {
 
           await query("UPDATE tg_state SET post_data = $1 WHERE chat_id = $2", [JSON.stringify(postData), chatId.toString()]);
 
-          // پیام پیش‌نمایش با دکمه بررسی جمینای
+          // ارسال پیش‌نمایش با دکمه‌های بررسی و انتشار
           await sendMessage(chatId, `📝 **پیش‌نمایش مقاله:**\n\n📌 عنوان: ${postData.title}\n📄 خلاصه: ${postData.excerpt}\n\n👇 **چه کاری انجام دهیم؟**`, {
             inline_keyboard: [
               [{ text: "🧐 بررسی با جمینای (امتیازدهی)", callback_data: `review_ai_${Date.now()}` }],
@@ -312,8 +337,11 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true });
       }
 
-      // اگر متن فرستاد
+      // ------------------------------------------
+      // دریافت متن (موضوع مقاله)
+      // ------------------------------------------
       if (text) {
+        // ساخت جدول وضعیت در صورت عدم وجود
         await query(`
           CREATE TABLE IF NOT EXISTS tg_state (
             chat_id VARCHAR(50) PRIMARY KEY, prompt TEXT, language VARCHAR(5), 
@@ -321,6 +349,7 @@ export async function POST(request: Request) {
           );
         `);
 
+        // ذخیره موضوع جدید
         await query(`
           INSERT INTO tg_state (chat_id, prompt, language, image_prompt, image_url, post_data) 
           VALUES ($1, $2, NULL, NULL, NULL, NULL) 

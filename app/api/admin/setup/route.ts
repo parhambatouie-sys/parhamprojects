@@ -53,6 +53,15 @@ export async function GET() {
     // ==========================================
     // ۴. ساخت جدول مقالات وبلاگ (Posts)
     // ==========================================
+        // ... (کدهای قبلی مربوط به ساخت جدول posts) ...
+
+    // اضافه کردن ستون‌های جدید برای امتیاز جمینای (این دو خط را اضافه کنید)
+    await query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS ai_score NUMERIC(4,1) DEFAULT 0;`);
+    await query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS review_feedback TEXT;`);
+
+    // ... (بقیه کدها مثل tg_state) ...
+    
+    
     await query(`
       CREATE TABLE IF NOT EXISTS posts (
         id SERIAL PRIMARY KEY,
@@ -68,7 +77,9 @@ export async function GET() {
         locale VARCHAR(5) DEFAULT 'fa',
         is_published BOOLEAN DEFAULT true,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        
       );
+      
     `);
 
     // ==========================================
