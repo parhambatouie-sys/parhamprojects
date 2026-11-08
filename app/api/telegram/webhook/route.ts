@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
+// @ts-ignore
+import { search, SafeSearchType } from "duck-duck-scrape";
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -102,7 +104,6 @@ export async function POST(request: Request) {
           publishAt.setHours(9, 0, 0, 0);
         }
 
-        // ذخیره مقاله در دیتابیس (اگر زمان‌بندی شده باشد، is_published را false می‌گذاریم)
         const isPublished = timeChoice === "now" ? true : false;
         
         const dbResult = await query(
@@ -114,9 +115,9 @@ export async function POST(request: Request) {
         const postId = dbResult.rows[0].id;
         const previewUrl = `https://parhamprojects.vercel.app/${stateRes.rows[0].language}/blog/${postData.slug}`;
 
-       const statusText = timeChoice === "now" 
-  ? "منتشر شد!" 
-  : `زمان‌بندی شد برای ${publishAt ? publishAt.toLocaleString('fa-IR') : 'نامشخص'}`;
+        const statusText = timeChoice === "now" 
+          ? "منتشر شد!" 
+          : `زمان‌بندی شد برای ${publishAt ? publishAt.toLocaleString('fa-IR') : 'نامشخص'}`;
 
         await editMessage(chatId, messageId, `✅ **مقاله ${statusText}**\n\n🔗 لینک پیش‌نمایش:\n${previewUrl}\n\n📌 شناسه مقاله: ${postId}`);
         
@@ -158,11 +159,54 @@ export async function POST(request: Request) {
 
           await query("UPDATE tg_state SET image_url = $1 WHERE chat_id = $2", [base64Image, chatId.toString()]);
 
-          // تولید مقاله
           const prompt = stateRes.rows[0].prompt;
           const lang = stateRes.rows[0].language;
 
-          const systemPrompt = `You are an expert SEO copywriter. Write a highly engaging and SEO-optimized blog post in ${lang === 'fa' ? 'Persian (Farsi)' : 'English'} based on this topic: "${prompt}". You MUST respond strictly with a valid JSON object containing exactly these keys: "title", "slug", "excerpt", "content", "category", "seo_title", "seo_description"`;
+          // ==========================================
+          // پیام وضعیت: شروع جستجو
+          // ==========================================
+          await sendMessage(chatId, "🔍 در حال جستجو در اینترنت برای پیدا کردن اطلاعات به‌روز و دقیق...");
+
+          // جستجوی DuckDuckGo
+          let searchContext = "";
+          try {
+            const searchResults = await search(prompt, { safeSearch: SafeSearchType.MODERATE });
+            searchContext = searchResults.results.slice(0, 5).map(r => 
+              `Title: ${r.title}\nSnippet: ${r.description}`
+            ).join('\n\n');
+            console.log("DuckDuckGo Search Success");
+          } catch (e) {
+            console.error("DuckDuckGo Search Failed:", e);
+          }
+
+          // ==========================================
+          // پیام وضعیت: شروع نوشتن
+          // ==========================================
+          await sendMessage(chatId, "✍️ اطلاعات دریافت شد. در حال نوشتن و ساختاردهی مقاله با هوش مصنوعی...");
+
+          // پرامپت حرفه‌ای با استفاده از اطلاعات جستجو
+          const systemPrompt = `You are an expert SEO copywriter and technical content creator. 
+          Write a highly engaging, technically accurate, and SEO-optimized blog post in ${lang === 'fa' ? 'Persian (Farsi)' : 'English'} based on this topic: "${prompt}".
+          
+          ${searchContext ? `Here is some real-time information from the web about this topic:\n${searchContext}\n\nUse this information to ensure your article is up-to-date and accurate.` : ''}
+          
+          CRITICAL RULES:
+          1. Tone: Professional, friendly, and educational.
+          2. Structure: H1 title, Introduction, Body with H2 and H3 headings, FAQ (3-6 questions), and a Conclusion.
+          3. NO FAKE DATA: Do not invent statistics, quotes, or fake URLs.
+          4. SEO: Naturally use the main keyword in the title, intro, and headings.
+          5. Length: Aim for a comprehensive guide (approx 800-1200 words).
+          
+          You MUST respond strictly with a valid JSON object containing exactly these keys:
+          "title": "A catchy SEO H1 title",
+          "slug": "an-english-url-slug",
+          "excerpt": "A compelling meta description (max 160 chars)",
+          "content": "The full article in Markdown format (Use ## for H2, ### for H3, ** for bold)",
+          "category": "A suitable category (e.g., Technology, Web Design, AI)",
+          "seo_title": "SEO optimized title",
+          "seo_description": "SEO meta description"
+          
+          Do not include markdown code blocks like \`\`\`json in the response. Just output the raw JSON.`;
 
           const aiResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.GROQ_API_KEY}` },
@@ -170,13 +214,13 @@ export async function POST(request: Request) {
           });
 
           const aiData = await aiResponse.json();
+          if (!aiResponse.ok) throw new Error(aiData.error?.message || "AI Error");
+
           const postData = JSON.parse(aiData.choices[0].message.content);
 
-          // ذخیره اطلاعات در tg_state
           await query("UPDATE tg_state SET post_data = $1 WHERE chat_id = $2", [JSON.stringify(postData), chatId.toString()]);
 
-          // ارسال پیش‌نمایش و پرسیدن زمان انتشار
-          await sendMessage(chatId, `📝 **پیش‌نمایش مقاله:**\n\n📌 عنوان: ${postData.title}\n📄 خلاصه: ${postData.excerpt}\n\n⏰ **چه زمانی منتشر شود؟**`, {
+          await sendMessage(chatId, `📝 **پیش‌نمایش مقاله (با اطلاعات به‌روز):**\n\n📌 عنوان: ${postData.title}\n📄 خلاصه: ${postData.excerpt}\n\n⏰ **چه زمانی منتشر شود؟**`, {
             inline_keyboard: [
               [{ text: "🚀 همین الان", callback_data: `time_now` }],
               [{ text: "🕐 یک ساعت دیگر", callback_data: `time_1h` }],
