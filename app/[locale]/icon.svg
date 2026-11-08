@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- حرف p بزرگ -->
+  <text x="45%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="85" fill="#FF7438">p</text>
+  <!-- حرف b کوچک‌تر در کنار آن -->
+  <text x="75%" y="65%" dominant-baseline="middle" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="50" fill="#FF7438">b</text>
+</svg>
