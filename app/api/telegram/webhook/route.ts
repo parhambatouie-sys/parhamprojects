@@ -84,7 +84,11 @@ export async function POST(request: Request) {
 
         await editMessage(chatId, messageId, `⏳ در حال تحلیل موضوع و ساخت پرامپت عکس با ابعاد استاندارد...`);
 
-        const promptSystem = `Based on this blog topic: "${prompt}", write a short, descriptive English prompt (max 60 words) to generate a high-quality, modern, and professional cover image for a blog post. IMPORTANT: The prompt MUST include the aspect ratio "16:9" or specify "wide format, 1920x1080 resolution". Just output the prompt text, nothing else.`;
+        // اصلاح شد: زبان متن روی عکس با زبان انتخابی هماهنگ می‌شود
+        const promptSystem = `Based on this blog topic: "${prompt}", write a short, descriptive English prompt (max 60 words) to generate a high-quality, modern, and professional cover image for a blog post. 
+        IMPORTANT 1: The prompt MUST include the aspect ratio "16:9" or specify "wide format, 1920x1080 resolution". 
+        IMPORTANT 2: The image MUST contain a prominent and readable text related to the topic. The text written ON the image MUST be in ${lang === 'fa' ? 'Persian (Farsi)' : 'English'} language.
+        Just output the prompt text, nothing else.`;
         
         const aiResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.GROQ_API_KEY}` },
@@ -214,7 +218,7 @@ export async function POST(request: Request) {
               model: "openai/gpt-oss-120b", 
               messages: [{ role: "user", content: systemPrompt }], 
               temperature: 0.7, 
-              frequency_penalty: 0.6, // <--- این پارامتر از تکرار متن جلوگیری می‌کند
+              frequency_penalty: 0.6, // جلوگیری از تکرار متن
               response_format: { type: "json_object" } 
             })
           });
