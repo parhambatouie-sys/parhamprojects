@@ -26,50 +26,6 @@ async function editMessage(chatId: string | number, messageId: number, text: str
   });
 }
 
-// 🛠️ تابع ضدتکرار (تشخیص تکرار با پیدا کردن تیتر تکراری)
-function cleanDuplicateContent(content: string): string {
-  if (!content) return content;
-  
-  // ۱. حذف عکس‌های اضافی
-  let cleaned = content.replace(/!\[.*?\]\(.*?\)/gi, '').replace(/<img[^>]*>/gi, '').trim();
-  
-  // ۲. پیدا کردن تیتر اول (H2 یا H3)
-  const headingMatch = cleaned.match(/##\s+.*?\n\n/);
-  
-  if (headingMatch) {
-    const firstHeading = headingMatch[0];
-    const firstIndex = cleaned.indexOf(firstHeading);
-    const secondIndex = cleaned.indexOf(firstHeading, firstIndex + 1);
-    
-    // اگر تیتر دوم پیدا شد، یعنی از آنجا به بعد تکراری است
-    if (secondIndex !== -1) {
-      cleaned = cleaned.substring(0, secondIndex).trim();
-    }
-  } else {
-    // اگر تیتر نبود، پاراگراف اول را چک می‌کنیم
-    const firstParagraphMatch = cleaned.match(/^.*?\n\n/);
-    if (firstParagraphMatch) {
-      const firstPara = firstParagraphMatch[0];
-      const firstIndex = cleaned.indexOf(firstPara);
-      const secondIndex = cleaned.indexOf(firstPara, firstIndex + 1);
-      
-      if (secondIndex !== -1) {
-        cleaned = cleaned.substring(0, secondIndex).trim();
-      }
-    }
-  }
-
-  // ۳. راه‌حل نهایی: اگر متن خیلی طولانی بود و نصف اول با نصف دوم یکسان بود
-  if (cleaned.length > 800) {
-    const half = Math.floor(cleaned.length / 2);
-    if (cleaned.substring(0, 200) === cleaned.substring(half, half + 200)) {
-      cleaned = cleaned.substring(0, half).trim();
-    }
-  }
-  
-  return cleaned;
-}
-
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -106,7 +62,6 @@ export async function POST(request: Request) {
       // انتخاب زبان
       if (data.startsWith("lang_")) {
         const lang = data.split("_")[1];
-        
         const stateRes = await query("SELECT prompt FROM tg_state WHERE chat_id = $1", [chatId.toString()]);
         if (stateRes.rows.length === 0) {
           await editMessage(chatId, messageId, "❌ موضوع پیدا نشد. لطفاً دوباره پیام بدهید.");
@@ -140,7 +95,6 @@ export async function POST(request: Request) {
       // انتخاب زمان انتشار
       if (data.startsWith("time_")) {
         const timeChoice = data.split("_")[1];
-        
         const stateRes = await query("DELETE FROM tg_state WHERE chat_id = $1 RETURNING *", [chatId.toString()]);
         
         if (stateRes.rows.length === 0 || !stateRes.rows[0].post_data) {
@@ -171,6 +125,101 @@ export async function POST(request: Request) {
         const statusText = timeChoice === "now" ? "منتشر شد!" : `زمان‌بندی شد برای ${publishAt ? publishAt.toLocaleString('fa-IR') : 'نامشخص'}`;
 
         await editMessage(chatId, messageId, `✅ **مقاله ${statusText}**\n\n🔗 لینک:\n${previewUrl}\n\n📌 شناسه: ${postId}`);
+        return NextResponse.json({ ok: true });
+      }
+
+      // ==========================================
+      // بخش جدید: بررسی با جمینای
+      // ==========================================
+      if (data.startsWith("review_ai_")) {
+        const postId = data.split("_")[2];
+        const stateRes = await query("SELECT * FROM tg_state WHERE chat_id = $1", [chatId.toString()]);
+        
+        if (stateRes.rows.length === 0 || !stateRes.rows[0].post_data) {
+          await editMessage(chatId, messageId, "❌ اطلاعات مقاله پیدا نشد.");
+          return NextResponse.json({ ok: true });
+        }
+
+        const postData = JSON.parse(stateRes.rows[0].post_data);
+        await editMessage(chatId, messageId, "🧐 در حال بررسی دقیق مقاله توسط جمینای (سئو، ساختار و عمق)...");
+
+        // درخواست به API بررسی ما
+        const reviewRes = await fetch("https://parhamprojects.vercel.app/api/admin/review", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: postData.title, content: postData.content, action: "review" })
+        });
+
+        const reviewData = await reviewRes.json();
+
+        if (!reviewRes.ok) throw new Error(reviewData.error || "Review failed");
+
+        const score = reviewData.score;
+        const feedback = reviewData.feedback;
+
+        if (score >= 8) {
+          // نمره بالا: تایید و انتشار
+          await query("UPDATE tg_state SET post_data = $1 WHERE chat_id = $2", [JSON.stringify({ ...postData, ai_score: score }), chatId.toString()]);
+          
+          await editMessage(chatId, messageId, `✅ **مقاله نمره ${score} از ۱۰ را گرفت!**\n\nنقاط قوت: عالی!\n\n👇 آماده انتشار است:`, {
+            inline_keyboard: [
+              [{ text: "🚀 تایید و انتشار نهایی", callback_data: `time_now` }],
+              [{ text: "🔗 مشاهده پیش‌نمایش", url: `https://parhamprojects.vercel.app/${stateRes.rows[0].language}/blog/${encodeURIComponent(postData.slug)}` }]
+            ]
+          });
+        } else {
+          // نمره پایین: نیاز به بازنویسی
+          await query("UPDATE tg_state SET post_data = $1 WHERE chat_id = $2", [JSON.stringify(postData), chatId.toString()]);
+          
+          await editMessage(chatId, messageId, `⚠️ **مقاله نمره ${score} از ۱۰ را گرفت.**\n\nدلایل ضعف:\n${feedback}\n\n👇 برای بازنویسی دقیق کلیک کنید:`, {
+            inline_keyboard: [
+              [{ text: "🔄 بازنویسی دقیق با جمینای", callback_data: `rewrite_ai_${postId}` }],
+            ]
+          });
+        }
+        return NextResponse.json({ ok: true });
+      }
+
+      // ==========================================
+      // بخش جدید: بازنویسی با جمینای
+      // ==========================================
+      if (data.startsWith("rewrite_ai_")) {
+        const postId = data.split("_")[2];
+        const stateRes = await query("SELECT * FROM tg_state WHERE chat_id = $1", [chatId.toString()]);
+        
+        if (stateRes.rows.length === 0 || !stateRes.rows[0].post_data) {
+          await editMessage(chatId, messageId, "❌ اطلاعات مقاله پیدا نشد.");
+          return NextResponse.json({ ok: true });
+        }
+
+        const postData = JSON.parse(stateRes.rows[0].post_data);
+        await editMessage(chatId, messageId, "🔄 در حال بازنویسی مقاله توسط جمینای...");
+
+        const rewriteRes = await fetch("https://parhamprojects.vercel.app/api/admin/review", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: postData.title, content: postData.content, action: "rewrite" })
+        });
+
+        const rewriteData = await rewriteRes.json();
+
+        if (!rewriteRes.ok) throw new Error(rewriteData.error || "Rewrite failed");
+
+        // ذخیره نسخه بازنویسی شده
+        const newPostData = {
+          ...postData,
+          title: rewriteData.rewritten_title,
+          content: rewriteData.rewritten_content
+        };
+
+        await query("UPDATE tg_state SET post_data = $1 WHERE chat_id = $2", [JSON.stringify(newPostData), chatId.toString()]);
+
+        await editMessage(chatId, messageId, `✅ **بازنویسی انجام شد!**\n\nحالا می‌توانید نسخه جدید را منتشر کنید یا دوباره بررسی کنید.`, {
+          inline_keyboard: [
+            [{ text: "🚀 انتشار نسخه بازنویسی شده", callback_data: `time_now` }],
+            [{ text: "🧐 بررسی مجدد", callback_data: `review_ai_${postId}` }],
+          ]
+        });
         return NextResponse.json({ ok: true });
       }
     }
@@ -210,15 +259,14 @@ export async function POST(request: Request) {
           const prompt = stateRes.rows[0].prompt;
           const lang = stateRes.rows[0].language;
 
-          await sendMessage(chatId, "🔍 در حال جستجو در اینترنت برای پیدا کردن اطلاعات به‌روز...");
-
+          await sendMessage(chatId, "🔍 در حال جستجو در اینترنت...");
           let searchContext = "";
           try {
             const searchResults = await search(prompt, { safeSearch: SafeSearchType.MODERATE });
             searchContext = searchResults.results.slice(0, 5).map(r => `Title: ${r.title}\nSnippet: ${r.description}`).join('\n\n');
           } catch (e) {}
 
-          await sendMessage(chatId, "✍️ اطلاعات دریافت شد. در حال نوشتن مقاله...");
+          await sendMessage(chatId, "✍️ در حال نوشتن مقاله...");
 
           const systemPrompt = `You are an expert SEO copywriter and technical content creator. 
           Write a highly engaging, technically accurate, and SEO-optimized blog post in ${lang === 'fa' ? 'Persian (Farsi)' : 'English'} based on this topic: "${prompt}".
@@ -226,10 +274,10 @@ export async function POST(request: Request) {
           ${searchContext ? `Here is some real-time information from the web about this topic:\n${searchContext}\n\nUse this information to ensure your article is up-to-date and accurate.` : ''}
           
           CRITICAL RULES:
-          1. Write the article exactly ONCE. Do not repeat the title, introduction, or any paragraphs.
-          2. Use Markdown format (## for H2, ### for H3).
-          3. The "slug" MUST BE IN ENGLISH LETTERS ONLY.
-          4. Length: approx 800-1200 words.
+          1. MAXIMUM LENGTH: 700 WORDS. Do not write more than this.
+          2. WRITE THE ARTICLE EXACTLY ONCE. DO NOT REPEAT THE INTRO, BODY, OR CONCLUSION.
+          3. Use Markdown format (## for H2, ### for H3).
+          4. The "slug" MUST BE IN ENGLISH LETTERS ONLY.
           
           You MUST respond strictly with a valid JSON object containing exactly these keys:
           "title", "slug", "excerpt", "content", "category", "seo_title", "seo_description".
@@ -240,8 +288,8 @@ export async function POST(request: Request) {
             body: JSON.stringify({ 
               model: "openai/gpt-oss-120b", 
               messages: [{ role: "user", content: systemPrompt }], 
-              temperature: 0.7, 
-              frequency_penalty: 0.8, 
+              temperature: 0.5, 
+              frequency_penalty: 1.5,
               response_format: { type: "json_object" } 
             })
           });
@@ -250,19 +298,14 @@ export async function POST(request: Request) {
           if (!aiResponse.ok) throw new Error(aiData.error?.message || "AI Error");
 
           const postData = JSON.parse(aiData.choices[0].message.content);
-          
-          // پاکسازی متن از تکرار
-          if (postData.content) {
-            postData.content = cleanDuplicateContent(postData.content);
-          }
 
           await query("UPDATE tg_state SET post_data = $1 WHERE chat_id = $2", [JSON.stringify(postData), chatId.toString()]);
 
-          await sendMessage(chatId, `📝 **پیش‌نمایش مقاله:**\n\n📌 عنوان: ${postData.title}\n📄 خلاصه: ${postData.excerpt}\n\n⏰ **چه زمانی منتشر شود؟**`, {
+          // پیام پیش‌نمایش با دکمه بررسی جمینای
+          await sendMessage(chatId, `📝 **پیش‌نمایش مقاله:**\n\n📌 عنوان: ${postData.title}\n📄 خلاصه: ${postData.excerpt}\n\n👇 **چه کاری انجام دهیم؟**`, {
             inline_keyboard: [
-              [{ text: "🚀 همین الان", callback_data: `time_now` }],
-              [{ text: "🕐 یک ساعت دیگر", callback_data: `time_1h` }],
-              [{ text: "🌅 فردا صبح (۹ صبح)", callback_data: `time_tomorrow` }],
+              [{ text: "🧐 بررسی با جمینای (امتیازدهی)", callback_data: `review_ai_${Date.now()}` }],
+              [{ text: "🚀 انتشار مستقیم (بدون بررسی)", callback_data: `time_now` }],
             ]
           });
         }
