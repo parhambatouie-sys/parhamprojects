@@ -1,3 +1,4 @@
+import { GoogleAnalytics } from '@next/third-parties/google'
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { notFound } from "next/navigation";
@@ -255,6 +256,11 @@ export default async function LocaleLayout({
           [اسکریپت‌های شخصی شما اینجا قرار می‌گیرند]
           
         */}
+        
+        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        
+        {/* کد گوگل آنالیتیکس */}
+        <GoogleAnalytics gaId="G-CEMVY7WLCT" />
 
       </body>
     </html>
