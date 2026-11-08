@@ -1,14 +1,18 @@
+// ============================================================================
+// ایمپورت‌های مورد نیاز برای ربات تلگرام
+// ============================================================================
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
-import { reviewArticle } from "@/lib/gemini"; // ایمپورت تابع جمینای
+import { reviewArticle } from "@/lib/gemini"; 
 // @ts-ignore
 import { search, SafeSearchType } from "duck-duck-scrape";
 
+// تنظیمات مربوط به محیط اجرای Next.js
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 // ============================================================================
-// توابع کمکی برای ارتباط با تلگرام
+// تابع کمکی برای ارسال پیام به تلگرام
 // ============================================================================
 async function sendMessage(chatId: string | number, text: string, replyMarkup?: any) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -32,6 +36,9 @@ async function sendMessage(chatId: string | number, text: string, replyMarkup?: 
   });
 }
 
+// ============================================================================
+// تابع کمکی برای ویرایش پیام‌های قبلی در تلگرام
+// ============================================================================
 async function editMessage(chatId: string | number, messageId: number, text: string, replyMarkup?: any) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   
@@ -66,7 +73,9 @@ export async function POST(request: Request) {
 
     // بررسی وجود تنظیمات اولیه
     if (!token || !myChatId) {
-      return NextResponse.json({ error: "Missing config" }, { status: 500 });
+      return NextResponse.json({ 
+        error: "Missing config" 
+      }, { status: 500 });
     }
 
     // ========================================================================
@@ -104,8 +113,10 @@ export async function POST(request: Request) {
         const newStatus = action === "accept" ? "accepted" : "rejected";
         const statusText = action === "accept" ? "✅ تایید شده" : "❌ رد شده";
 
+        // آپدیت وضعیت سفارش در دیتابیس
         await query("UPDATE orders SET status = $1 WHERE id = $2", [newStatus, orderId]);
         
+        // ویرایش پیام تلگرام
         await editMessage(
           chatId, 
           messageId, 
@@ -299,7 +310,17 @@ export async function POST(request: Request) {
             );
           }
         } catch (error: any) {
-          await editMessage(chatId, messageId, `❌ خطا در بررسی مقاله:\n${error.message}\n\nآیا کلید GEMINI_API_KEY در ورسل درست تنظیم شده است؟`);
+          // دکمه تلاش مجدد در صورت خطای سرور گوگل
+          await editMessage(
+            chatId, 
+            messageId, 
+            `❌ **خطا در بررسی مقاله:**\n${error.message}\n\n(مشکل معمولاً از سرورهای شلوغ گوگل است. با دکمه زیر دوباره تلاش کنید.)`,
+            {
+              inline_keyboard: [
+                [{ text: "🔄 تلاش مجدد برای بررسی", callback_data: `review_ai_${postId}` }]
+              ]
+            }
+          );
         }
         return NextResponse.json({ ok: true });
       }
@@ -346,7 +367,17 @@ export async function POST(request: Request) {
             }
           );
         } catch (error: any) {
-          await editMessage(chatId, messageId, `❌ خطا در بازنویسی مقاله:\n${error.message}`);
+          // دکمه تلاش مجدد در صورت خطای بازنویسی
+          await editMessage(
+            chatId, 
+            messageId, 
+            `❌ **خطا در بازنویسی مقاله:**\n${error.message}\n\n👇 دوباره تلاش کنید:`,
+            {
+              inline_keyboard: [
+                [{ text: "🔄 تلاش مجدد برای بازنویسی", callback_data: `rewrite_ai_${postId}` }]
+              ]
+            }
+          );
         }
         return NextResponse.json({ ok: true });
       }
@@ -523,6 +554,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   } catch (error: any) {
     console.error("Telegram Webhook Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ 
+      error: error.message 
+    }, { status: 500 });
   }
 }
