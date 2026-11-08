@@ -78,7 +78,6 @@ export default async function HomePage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  // دریافت نمونه‌کارها
   let projects = [];
   try {
     const result = await query(
@@ -90,7 +89,6 @@ export default async function HomePage({
     console.error("Failed to fetch projects:", error);
   }
 
-  // دریافت خدمات
   let dbServices = [];
   try {
     const result = await query(
@@ -244,7 +242,7 @@ export default async function HomePage({
           ) : (
             <div className="grid gap-6 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
               {projects.map((project: any) => (
-                <div key={project.id} className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-[#111315]/50 backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 hover:border-brand/30 hover:shadow-[0_20px_40px_-20px_rgba(255,116,56,0.15)]">
+                <Link href={`/${locale}/work/${project.id}`} key={project.id} className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-[#111315]/50 backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 hover:border-brand/30 hover:shadow-[0_20px_40px_-20px_rgba(255,116,56,0.15)]">
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-black/40">
                      {project.image_url ? (
                        // eslint-disable-next-line @next/next/no-img-element
@@ -264,30 +262,27 @@ export default async function HomePage({
                       </div>
                     )}
                     <div className="mt-auto pt-4 border-t border-white/[0.06]">
-                      {project.project_url ? (
-                       <Link href={`/${locale}/work/${project.id}`} className="inline-flex items-center gap-2 text-xs font-semibold text-foreground transition-colors hover:text-brand md:text-sm">
-                          {locale === 'fa' ? 'مشاهده پروژه' : 'View Project'}
-                          <span className="rtl:rotate-180 transition-transform duration-300 group-hover:translate-x-1">→</span>
-                        </Link>
-                      ) : (<span className="text-xs font-semibold text-muted/50 md:text-sm">{locale === 'fa' ? 'به‌زودی' : 'Coming Soon'}</span>)}
+                      <span className="inline-flex items-center gap-2 text-xs font-semibold text-foreground transition-colors group-hover:text-brand md:text-sm">
+                        {locale === 'fa' ? 'مشاهده جزئیات' : 'View Details'}
+                        <span className="rtl:rotate-180 transition-transform duration-300 group-hover:translate-x-1">→</span>
+                      </span>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
         </div>
       </section>
 
-      {/* ============ 5. بخش آخرین مقالات (برای هر دو زبان) ============ */}
+      {/* ============ 5. بخش آخرین مقالات ============ */}
       <LatestPosts locale={locale} />
 
-      {/* ============ 6. بخش بیوگرافی (اصلاح شده برای دسکتاپ) ============ */}
+      {/* ============ 6. بخش بیوگرافی ============ */}
       <section id="about" className="relative scroll-mt-24 border-t border-border overflow-hidden">
         
         <div className="relative z-10 mx-auto w-full max-w-7xl md:px-6 md:py-32 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
           
-          {/* ستون عکس */}
           <div className="relative w-full h-[50vh] md:h-[600px] rounded-none md:rounded-3xl overflow-hidden order-1 md:order-none">
             <Image
               src="/bio-bg.jpg"
@@ -301,7 +296,6 @@ export default async function HomePage({
             <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/80 to-transparent md:hidden" />
           </div>
 
-          {/* ستون متن‌ها */}
           <div className="flex flex-col items-start text-start max-w-xl px-4 md:px-0 py-8 md:py-0">
             <div className="mb-4 flex items-center justify-start gap-3 text-[10px] font-mono uppercase tracking-[0.25em] text-muted md:mb-6">
               <span className="text-brand">05</span>
