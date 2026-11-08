@@ -1,7 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <!-- پس‌زمینه نارنجی با گوشه‌های گرد -->
-  <rect width="100" height="100" rx="25" fill="#FF7438" />
+  <rect width="100" height="100" rx="25" fill="#111315" />
   
   <!-- حروف PB با رنگ تیره و فونت ضخیم -->
-  <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="55" fill="#111315" letter-spacing="-2">PB</text>
+  <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="55" fill="#FF7438" letter-spacing="-2">PB</text>
 </svg>
+
+FF7438
+111315
