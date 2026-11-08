@@ -1,13 +1,21 @@
+// ============================================================================
+// تابع ارتباط با Google Gemini API برای بررسی و بازنویسی مقالات
+// ============================================================================
 export async function reviewArticle(title: string, content: string, action: "review" | "rewrite") {
+  // ۱. دریافت کلید API از متغیرهای محیطی ورسل
   const apiKey = process.env.GEMINI_API_KEY;
   
+  // بررسی وجود کلید
   if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is missing in Vercel Environment Variables");
+    throw new Error("کلید GEMINI_API_KEY در تنظیمات ورسل (Environment Variables) وجود ندارد.");
   }
 
+  // ۲. تعیین اینکه آیا درخواست برای "بررسی" است یا "بازنویسی"
   const isRewrite = action === "rewrite";
   
-  const systemPrompt = `You are an expert SEO editor-in-chief. 
+  // ۳. ساخت پرامپت (دستورالعمل) برای هوش مصنوعی
+  const systemPrompt = `
+    You are an expert SEO editor-in-chief. 
     Analyze the following article strictly based on 5 criteria:
     1. SEO (Keyword usage, headings structure, meta) - 2 points
     2. Depth & Value (No fluff, comprehensive info) - 2 points
@@ -29,11 +37,15 @@ export async function reviewArticle(title: string, content: string, action: "rev
 
     Article to review:
     Title: ${title}
-    Content: ${content}`;
+    Content: ${content}
+  `;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  // ۴. آدرس API با استفاده از مدل جدید Gemini 3.8 Flash
+  // طبق خطای قبلی گوگل، مدل 2.0 حذف شده و باید از 3.8 استفاده کنیم
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
 
-  const payload = {
+  // ۵. آماده‌سازی بدنه درخواست (Payload) طبق استاندارد گوگل
+  const requestPayload = {
     contents: [
       {
         role: "user",
@@ -45,36 +57,47 @@ export async function reviewArticle(title: string, content: string, action: "rev
       }
     ],
     generationConfig: {
-      temperature: 0.3,
-      responseMimeType: "application/json"
+      temperature: 0.3, // دمای پایین برای خروجی دقیق‌تر و منطقی‌تر
+      responseMimeType: "application/json" // اجبار مدل به تولید خروجی JSON
     }
   };
 
-  // 👈 بسیار مهم: متد درخواست باید حتماً POST باشد
-  const response = await fetch(url, {
-    method: "POST", 
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  });
+  try {
+    // ۶. ارسال درخواست به گوگل (حتماً باید متد POST باشد)
+    const response = await fetch(apiUrl, {
+      method: "POST", 
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(requestPayload)
+    });
 
-  const data = await response.json();
+    // ۷. تبدیل پاسخ به فرمت قابل خواندن
+    const data = await response.json();
 
-  if (!response.ok) {
-    console.error("Gemini Error Data:", data);
-    throw new Error(data.error?.message || "Gemini API Error");
+    // ۸. بررسی خطا در پاسخ گوگل
+    if (!response.ok) {
+      console.error("Gemini API Error Response:", data);
+      throw new Error(data.error?.message || "خطای ناشناخته در ارتباط با Gemini API");
+    }
+
+    // ۹. استخراج متن تولید شده توسط هوش مصنوعی
+    const resultText = data.candidates[0].content.parts[0].text;
+    
+    // ۱۰. پاکسازی متن از تگ‌های مارک‌داون (برخی مدل‌ها خروجی JSON را داخل ```json قرار می‌دهند)
+    let cleanText = resultText.trim();
+    
+    if (cleanText.startsWith("```json")) {
+      cleanText = cleanText.replace(/^```json\n/, "").replace(/\n```$/, "");
+    } else if (cleanText.startsWith("```")) {
+      cleanText = cleanText.replace(/^```\n/, "").replace(/\n```$/, "");
+    }
+
+    // ۱۱. تبدیل متن تمیز شده به یک آبجکت JSON و بازگرداندن آن
+    return JSON.parse(cleanText);
+
+  } catch (error: any) {
+    console.error("Error in reviewArticle function:", error);
+    throw error;
   }
-
-  const resultText = data.candidates[0].content.parts[0].text;
-  
-  // پاکسازی خروجی از تگ‌های مارک‌داون احتمالی که مدل ممکن است برگرداند
-  let cleanText = resultText.trim();
-  if (cleanText.startsWith("```json")) {
-    cleanText = cleanText.replace(/^```json\n/, "").replace(/\n```$/, "");
-  } else if (cleanText.startsWith("```")) {
-    cleanText = cleanText.replace(/^```\n/, "").replace(/\n```$/, "");
-  }
-
-  return JSON.parse(cleanText);
 }
