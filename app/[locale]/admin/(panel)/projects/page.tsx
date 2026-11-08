@@ -1,17 +1,20 @@
 "use client";
 
 import { useState, useEffect, FormEvent } from "react";
+import { MultiImageUpload } from "@/components/admin/MultiImageUpload";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 
 type Project = {
   id: number;
   title: string;
   description: string;
+  content: string; // <-- اضافه شد
   category: string;
   technologies: string;
   project_url: string;
   github_url: string;
   image_url: string;
+  gallery_images: string; // <-- اضافه شد
   is_featured: boolean;
   is_published: boolean;
   sort_order: number;
@@ -21,11 +24,13 @@ type Project = {
 const initialFormData = {
   title: "",
   description: "",
+  content: "", // <-- اضافه شد
   category: "شرکتی",
   technologies: "",
   project_url: "",
   github_url: "",
   image_url: "",
+  gallery_images: "[]", // <-- اضافه شد
   is_featured: false,
   is_published: true,
   sort_order: 0,
@@ -39,6 +44,7 @@ export default function AdminProjectsPage() {
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [formData, setFormData] = useState(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCaseStudyOpen, setIsCaseStudyOpen] = useState(false); // استیت برای باز و بسته کردن بخش اختصاصی
 
   const fetchProjects = () => {
     setLoading(true);
@@ -64,11 +70,13 @@ export default function AdminProjectsPage() {
       setFormData({
         title: project.title,
         description: project.description || "",
+        content: project.content || "", // <-- اضافه شد
         category: project.category || "شرکتی",
         technologies: project.technologies || "",
         project_url: project.project_url || "",
         github_url: project.github_url || "",
         image_url: project.image_url || "",
+        gallery_images: project.gallery_images || "[]", // <-- اضافه شد
         is_featured: project.is_featured,
         is_published: project.is_published,
         sort_order: project.sort_order,
@@ -78,6 +86,7 @@ export default function AdminProjectsPage() {
       setCurrentProject(null);
       setFormData(initialFormData);
     }
+    setIsCaseStudyOpen(false); // بستن بخش اختصاصی هنگام باز کردن فرم جدید
     setIsModalOpen(true);
   };
 
@@ -238,6 +247,31 @@ export default function AdminProjectsPage() {
                     <span className="text-sm text-foreground">پروژه ویژه (Featured)</span>
                   </label>
                 </div>
+              </div>
+
+              {/* بخش اختصاصی صفحه نمونه‌کار (آکاردئون) */}
+              <div className="border border-border rounded-lg overflow-hidden bg-black/10 mt-4">
+                <button 
+                  type="button" 
+                  onClick={() => setIsCaseStudyOpen(!isCaseStudyOpen)}
+                  className="w-full flex items-center justify-between p-4 text-sm font-semibold text-foreground hover:bg-white/5 transition"
+                >
+                  <span>🎨 محتوای صفحه اختصاصی (Case Study)</span>
+                  <span>{isCaseStudyOpen ? "▲" : "▼"}</span>
+                </button>
+                
+                {isCaseStudyOpen && (
+                  <div className="p-4 border-t border-border space-y-4">
+                    <div>
+                      <label className="mb-1 block text-xs text-muted">متن کامل و جزئیات (Case Study)</label>
+                      <textarea rows={6} value={formData.content} onChange={(e) => setFormData({...formData, content: e.target.value})} placeholder="درباره چالش‌ها، راهکارها و جزئیات این پروژه بنویسید..." className="w-full rounded-md border border-border bg-[#111315] px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none resize-y" />
+                    </div>
+                    <div>
+                      <label className="mb-3 block text-xs text-muted">گالری تصاویر (چند عکس)</label>
+                      <MultiImageUpload onUpload={(urls: string[]) => setFormData({...formData, gallery_images: JSON.stringify(urls)})} />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="mt-8 flex justify-end gap-3 border-t border-border pt-4">

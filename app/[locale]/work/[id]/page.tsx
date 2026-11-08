@@ -37,6 +37,7 @@ export default async function ProjectSinglePage({ params }: { params: Promise<{ 
       <Header locale={locale} />
       <main className="min-h-screen pt-32 pb-24 md:pt-44 md:pb-32 relative bg-background">
         <div className="mx-auto max-w-7xl px-6">
+          
           <Link href={`/${locale}#work`} className="mb-12 inline-flex items-center gap-2 text-sm font-medium text-muted transition hover:text-brand">
             <span className={isRtl ? "rotate-180" : ""}>←</span>{isRtl ? "بازگشت به نمونه‌کارها" : "Back to Work"}
           </Link>

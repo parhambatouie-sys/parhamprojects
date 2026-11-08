@@ -15,6 +15,10 @@ export async function GET() {
     await query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS locale VARCHAR(5) DEFAULT 'fa';`);
     await query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS content TEXT;`);
     await query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS gallery_images TEXT;`);
+
+        // اضافه کردن ستون‌های مربوط به صفحه اختصاصی
+    await query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS content TEXT;`);
+    await query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS gallery_images TEXT;`);
     
     // ==========================================
     // ۲. ساخت جدول خدمات (Services)
