@@ -44,6 +44,9 @@ export async function POST(request: Request) {
 
       if (chatId.toString() !== myChatId) return NextResponse.json({ ok: true });
 
+      // 👇 پاسخ فوری به تلگرام تا از ارسال درخواست تکراری جلوگیری شود
+      await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: body.callback_query.id }) });
+
       // ------------------------------------------
       // پردازش دکمه‌های تایید/رد سفارش
       // ------------------------------------------
@@ -57,8 +60,6 @@ export async function POST(request: Request) {
         await query("UPDATE orders SET status = $1 WHERE id = $2", [newStatus, orderId]);
         
         await editMessage(chatId, messageId, `${message.text}\n\n👉 **وضعیت جدید: ${statusText}**`);
-        
-        await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: body.callback_query.id }) });
         return NextResponse.json({ ok: true });
       }
 
@@ -107,9 +108,12 @@ export async function POST(request: Request) {
       // ------------------------------------------
       if (data.startsWith("time_")) {
         const timeChoice = data.split("_")[1];
-        const stateRes = await query("SELECT * FROM tg_state WHERE chat_id = $1", [chatId.toString()]);
+        
+        // 👇 دستور جادویی: خواندن و پاک کردن همزمان (جلوگیری از ثبت دوباره)
+        const stateRes = await query("DELETE FROM tg_state WHERE chat_id = $1 RETURNING *", [chatId.toString()]);
+        
         if (stateRes.rows.length === 0 || !stateRes.rows[0].post_data) {
-          await editMessage(chatId, messageId, "❌ اطلاعات مقاله پیدا نشد.");
+          // اگر اینجا خالی بود یعنی درخواست تکراری است و قبلاً پردازش شده
           return NextResponse.json({ ok: true });
         }
 
@@ -126,16 +130,6 @@ export async function POST(request: Request) {
 
         const isPublished = timeChoice === "now" ? true : false;
         
-        // ⚠️ جلوگیری از ثبت دوباره (اگر کاربر دو بار کلیک کرد)
-        const checkExist = await query("SELECT id FROM posts WHERE slug = $1", [postData.slug]);
-        
-        if (checkExist.rows.length > 0) {
-          await editMessage(chatId, messageId, `⚠️ این مقاله قبلاً در سایت ثبت شده است.\n\n🔗 لینک:\nhttps://parhamprojects.vercel.app/${stateRes.rows[0].language}/blog/${encodeURIComponent(postData.slug)}`);
-          await query("DELETE FROM tg_state WHERE chat_id = $1", [chatId.toString()]);
-          await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: body.callback_query.id }) });
-          return NextResponse.json({ ok: true });
-        }
-
         const dbResult = await query(
           `INSERT INTO posts (title, slug, excerpt, content, category, author, seo_title, seo_description, image_url, locale, is_published, created_at) 
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
@@ -143,14 +137,11 @@ export async function POST(request: Request) {
         );
 
         const postId = dbResult.rows[0].id;
-        // ⚠️ انکود کردن لینک برای جلوگیری از خطای 404
         const previewUrl = `https://parhamprojects.vercel.app/${stateRes.rows[0].language}/blog/${encodeURIComponent(postData.slug)}`;
         const statusText = timeChoice === "now" ? "منتشر شد!" : `زمان‌بندی شد برای ${publishAt ? publishAt.toLocaleString('fa-IR') : 'نامشخص'}`;
 
         await editMessage(chatId, messageId, `✅ **مقاله ${statusText}**\n\n🔗 لینک:\n${previewUrl}\n\n📌 شناسه: ${postId}`);
         
-        await query("DELETE FROM tg_state WHERE chat_id = $1", [chatId.toString()]);
-        await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: body.callback_query.id }) });
         return NextResponse.json({ ok: true });
       }
     }
@@ -200,7 +191,6 @@ export async function POST(request: Request) {
 
           await sendMessage(chatId, "✍️ اطلاعات دریافت شد. در حال نوشتن مقاله...");
 
-          // ⚠️ اصلاح شد: تاکید شدید بر انگلیسی بودن Slug
           const systemPrompt = `You are an expert SEO copywriter and technical content creator. 
           Write a highly engaging, technically accurate, and SEO-optimized blog post in ${lang === 'fa' ? 'Persian (Farsi)' : 'English'} based on this topic: "${prompt}".
           
