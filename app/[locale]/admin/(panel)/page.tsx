@@ -4,26 +4,40 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
-type Order = {
-  id: number;
-  status: string;
+type DashboardStats = {
+  totalOrders: number;
+  newOrders: number;
+  totalProjects: number;
+  totalPosts: number;
 };
 
 export default function AdminDashboard() {
   const params = useParams();
   const locale = params.locale as string;
-  const [orders, setOrders] = useState<Order[]>([]);
+  
+  const [stats, setStats] = useState<DashboardStats>({
+    totalOrders: 0,
+    newOrders: 0,
+    totalProjects: 0,
+    totalPosts: 0,
+  });
+  
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // تغییر مهم: اضافه شدن credentials برای ارسال اطلاعات لاگین
-    fetch("/api/admin/orders", { credentials: "include" })
+    // دریافت آمار واقعی از API جدید
+    fetch("/api/admin/dashboard", { credentials: "include" })
       .then((res) => {
         if (!res.ok) throw new Error("Unauthorized");
         return res.json();
       })
       .then((data) => {
-        if (data.orders) setOrders(data.orders);
+        setStats({
+          totalOrders: data.totalOrders || 0,
+          newOrders: data.newOrders || 0,
+          totalProjects: data.totalProjects || 0,
+          totalPosts: data.totalPosts || 0,
+        });
         setLoading(false);
       })
       .catch((err) => {
@@ -32,17 +46,32 @@ export default function AdminDashboard() {
       });
   }, []);
 
-  const totalOrders = orders.length;
-  const newOrders = orders.filter((o) => o.status === "new").length;
-  
-  const activeProjects = 8; 
-  const revenue = "۱۸.۵M";
-
-  const stats = [
-    { label: "کل سفارش‌ها", value: totalOrders.toString(), color: "foreground", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" },
-    { label: "سفارش‌های جدید", value: newOrders.toString().padStart(2, '0'), color: "brand", icon: "M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" },
-    { label: "پروژه‌های فعال", value: activeProjects.toString().padStart(2, '0'), color: "foreground", icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" },
-    { label: "درآمد این ماه (تومان)", value: revenue, color: "foreground", icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
+  // آرایه کارت‌های داشبورد (حالا با داده‌های واقعی)
+  const statCards = [
+    { 
+      label: "کل سفارش‌ها", 
+      value: stats.totalOrders.toString(), 
+      color: "foreground", 
+      icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" 
+    },
+    { 
+      label: "سفارش‌های جدید", 
+      value: stats.newOrders.toString().padStart(2, '0'), 
+      color: "brand", 
+      icon: "M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" 
+    },
+    { 
+      label: "پروژه‌های ثبت شده", 
+      value: stats.totalProjects.toString().padStart(2, '0'), 
+      color: "foreground", 
+      icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" 
+    },
+    { 
+      label: "مقالات وبلاگ", 
+      value: stats.totalPosts.toString().padStart(2, '0'), 
+      color: "foreground", 
+      icon: "M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" 
+    },
   ];
 
   if (loading) return <div className="text-white text-center mt-10">در حال بارگذاری آمار...</div>;
@@ -60,13 +89,14 @@ export default function AdminDashboard() {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* آیکون زنگوله با تعداد سفارشات جدید واقعی */}
           <div className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-muted transition hover:text-white">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
-            {newOrders > 0 && (
+            {stats.newOrders > 0 && (
               <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-brand-foreground border-2 border-[#111315]">
-                {newOrders}
+                {stats.newOrders}
               </span>
             )}
           </div>
@@ -81,7 +111,7 @@ export default function AdminDashboard() {
       </header>
 
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, i) => (
+        {statCards.map((stat, i) => (
           <div key={i} className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 hover:border-brand/30 hover:bg-white/[0.03]">
             <div className="relative flex items-center justify-between">
               <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.color === "brand" ? "bg-brand/10 text-brand" : "bg-white/[0.04] text-muted"}`}>
