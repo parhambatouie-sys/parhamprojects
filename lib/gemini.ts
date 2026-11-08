@@ -2,16 +2,14 @@
 // تابع ارتباط با Google Gemini API برای بررسی و بازنویسی مقالات
 // ============================================================================
 export async function reviewArticle(title: string, content: string, action: "review" | "rewrite") {
-  // دریافت کلید API از متغیرهای محیطی
   const apiKey = process.env.GEMINI_API_KEY;
   
   if (!apiKey) {
-    throw new Error("کلید GEMINI_API_KEY در تنظیمات ورسل وجود ندارد.");
+    throw new Error("کلید GEMINI_API_KEY در تنظیمات ورسل (Environment Variables) وجود ندارد.");
   }
 
   const isRewrite = action === "rewrite";
   
-  // ساخت پرامپت
   const systemPrompt = `
     You are an expert SEO editor-in-chief. 
     Analyze the following article strictly based on 5 criteria:
@@ -38,8 +36,8 @@ export async function reviewArticle(title: string, content: string, action: "rev
     Content: ${content}
   `;
 
-  // آدرس API (استفاده از مدل پایدار 1.5-flash)
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  // 👈 تغییر مهم: استفاده از مدل جدید و پایدار 2.5-flash
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
   const requestPayload = {
     contents: [
