@@ -26,22 +26,44 @@ async function editMessage(chatId: string | number, messageId: number, text: str
   });
 }
 
-// 🛠️ تابع ضدتکرار (این بار بسیار امن و هوشمند)
+// 🛠️ تابع ضدتکرار (تشخیص تکرار با پیدا کردن تیتر تکراری)
 function cleanDuplicateContent(content: string): string {
   if (!content) return content;
   
-  // ۱. حذف عکس‌هایی که هوش مصنوعی ممکن است داخل متن گذاشته باشد
-  let cleaned = content.replace(/!\[.*?\]\(.*?\)/g, '').replace(/<img[^>]*>/g, '').trim();
+  // ۱. حذف عکس‌های اضافی
+  let cleaned = content.replace(/!\[.*?\]\(.*?\)/gi, '').replace(/<img[^>]*>/gi, '').trim();
   
-  // ۲. بررسی تکرار نصف به نصف
-  const half = Math.floor(cleaned.length / 2);
-  if (half > 200) {
-    const firstHalf = cleaned.substring(0, half).trim();
-    const secondHalf = cleaned.substring(half).trim();
+  // ۲. پیدا کردن تیتر اول (H2 یا H3)
+  const headingMatch = cleaned.match(/##\s+.*?\n\n/);
+  
+  if (headingMatch) {
+    const firstHeading = headingMatch[0];
+    const firstIndex = cleaned.indexOf(firstHeading);
+    const secondIndex = cleaned.indexOf(firstHeading, firstIndex + 1);
     
-    // اگر ۱۵۰ کاراکتر اول هر دو نصف دقیقاً یکسان بود، یعنی متن دو بار نوشته شده
-    if (firstHalf.substring(0, 150) === secondHalf.substring(0, 150)) {
-      return firstHalf; // فقط نصف اول را برگردان
+    // اگر تیتر دوم پیدا شد، یعنی از آنجا به بعد تکراری است
+    if (secondIndex !== -1) {
+      cleaned = cleaned.substring(0, secondIndex).trim();
+    }
+  } else {
+    // اگر تیتر نبود، پاراگراف اول را چک می‌کنیم
+    const firstParagraphMatch = cleaned.match(/^.*?\n\n/);
+    if (firstParagraphMatch) {
+      const firstPara = firstParagraphMatch[0];
+      const firstIndex = cleaned.indexOf(firstPara);
+      const secondIndex = cleaned.indexOf(firstPara, firstIndex + 1);
+      
+      if (secondIndex !== -1) {
+        cleaned = cleaned.substring(0, secondIndex).trim();
+      }
+    }
+  }
+
+  // ۳. راه‌حل نهایی: اگر متن خیلی طولانی بود و نصف اول با نصف دوم یکسان بود
+  if (cleaned.length > 800) {
+    const half = Math.floor(cleaned.length / 2);
+    if (cleaned.substring(0, 200) === cleaned.substring(half, half + 200)) {
+      cleaned = cleaned.substring(0, half).trim();
     }
   }
   
@@ -56,7 +78,9 @@ export async function POST(request: Request) {
 
     if (!token || !myChatId) return NextResponse.json({ error: "Missing config" }, { status: 500 });
 
+    // ==========================================
     // بخش اول: بررسی دکمه‌های شیشه‌ای
+    // ==========================================
     if (body.callback_query) {
       const { data, message } = body.callback_query;
       const chatId = message.chat.id;
@@ -66,6 +90,7 @@ export async function POST(request: Request) {
 
       await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: body.callback_query.id }) });
 
+      // پردازش دکمه‌های سفارش
       if (data.startsWith("order_")) {
         const parts = data.split("_");
         const action = parts[1];
@@ -78,8 +103,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true });
       }
 
+      // انتخاب زبان
       if (data.startsWith("lang_")) {
         const lang = data.split("_")[1];
+        
         const stateRes = await query("SELECT prompt FROM tg_state WHERE chat_id = $1", [chatId.toString()]);
         if (stateRes.rows.length === 0) {
           await editMessage(chatId, messageId, "❌ موضوع پیدا نشد. لطفاً دوباره پیام بدهید.");
@@ -110,8 +137,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true });
       }
 
+      // انتخاب زمان انتشار
       if (data.startsWith("time_")) {
         const timeChoice = data.split("_")[1];
+        
         const stateRes = await query("DELETE FROM tg_state WHERE chat_id = $1 RETURNING *", [chatId.toString()]);
         
         if (stateRes.rows.length === 0 || !stateRes.rows[0].post_data) {
@@ -146,7 +175,9 @@ export async function POST(request: Request) {
       }
     }
 
+    // ==========================================
     // بخش دوم: دریافت پیام‌های متنی و عکس
+    // ==========================================
     if (body.message) {
       const chatId = body.message.chat.id;
       const text = body.message.text;
@@ -154,6 +185,7 @@ export async function POST(request: Request) {
 
       if (chatId.toString() !== myChatId) return NextResponse.json({ ok: true });
 
+      // اگر عکس فرستاد
       if (photo) {
         const stateRes = await query("SELECT * FROM tg_state WHERE chat_id = $1", [chatId.toString()]);
         if (stateRes.rows.length === 0 || !stateRes.rows[0].language) {
@@ -209,8 +241,7 @@ export async function POST(request: Request) {
               model: "openai/gpt-oss-120b", 
               messages: [{ role: "user", content: systemPrompt }], 
               temperature: 0.7, 
-              frequency_penalty: 1.0, // حداکثر جریمه برای تکرار
-              presence_penalty: 0.6,
+              frequency_penalty: 0.8, 
               response_format: { type: "json_object" } 
             })
           });
@@ -220,7 +251,7 @@ export async function POST(request: Request) {
 
           const postData = JSON.parse(aiData.choices[0].message.content);
           
-          // اجرای تابع ضدتکرار روی متن مقاله
+          // پاکسازی متن از تکرار
           if (postData.content) {
             postData.content = cleanDuplicateContent(postData.content);
           }
@@ -238,6 +269,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true });
       }
 
+      // اگر متن فرستاد
       if (text) {
         await query(`
           CREATE TABLE IF NOT EXISTS tg_state (
