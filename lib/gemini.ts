@@ -5,7 +5,7 @@ export async function reviewArticle(title: string, content: string, action: "rev
   const apiKey = process.env.GEMINI_API_KEY;
   
   if (!apiKey) {
-    throw new Error("کلید GEMINI_API_KEY در تنظیمات ورسل (Environment Variables) وجود ندارد.");
+    throw new Error("کلید GEMINI_API_KEY در تنظیمات ورسل وجود ندارد.");
   }
 
   const isRewrite = action === "rewrite";
@@ -36,8 +36,8 @@ export async function reviewArticle(title: string, content: string, action: "rev
     Content: ${content}
   `;
 
-  // 👈 تغییر مهم: استفاده از مدل جدید و پایدار 2.5-flash
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  // 👈 به‌روزرسانی نهایی: استفاده از مدل gemini-3.8-flash
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
 
   const requestPayload = {
     contents: [
@@ -56,7 +56,7 @@ export async function reviewArticle(title: string, content: string, action: "rev
   };
 
   try {
-    // ایجاد یک سیگنال برای لغو درخواست پس از ۸ ثانیه (برای جلوگیری از گیر کردن ورسل)
+    // تایم‌اوت ۸ ثانیه‌ای برای جلوگیری از گیر کردن
     const signal = AbortSignal.timeout(8000);
 
     const response = await fetch(apiUrl, {
