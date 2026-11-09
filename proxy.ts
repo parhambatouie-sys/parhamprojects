@@ -7,17 +7,16 @@ const intlMiddleware = createMiddleware(routing);
 
 export function proxy(request: NextRequest) {
   const url = request.nextUrl;
+  const basicAuth = request.headers.get('authorization');
+  const cookie = request.cookies.get('admin_session');
 
   // =========================================================================
-  // 👈 استثنا ۱: مسیر setup دیتابیس (تا ریدایرکت نشود)
+  // ۱. استثناهای خاص (بدون نیاز به لاگین)
   // =========================================================================
   if (url.pathname === '/api/admin/setup') {
     return NextResponse.next();
   }
 
-  // =========================================================================
-  // 👈 استثنا ۲: مسیر بررسی جمینای (برای ربات تلگرام)
-  // =========================================================================
   if (url.pathname === '/api/admin/review') {
     const internalAuth = request.headers.get('x-internal-bot-auth');
     if (internalAuth === process.env.TELEGRAM_BOT_TOKEN) {
@@ -26,19 +25,20 @@ export function proxy(request: NextRequest) {
   }
 
   // =========================================================================
-  // بررسی امنیتی مسیرهای ادمین
+  // ۲. بررسی امنیتی مسیرهای ادمین
   // =========================================================================
-  const basicAuth = request.headers.get('authorization');
-  const cookie = request.cookies.get('admin_session');
-
   if (url.pathname.startsWith('/api/admin') || url.pathname.includes('/admin')) {
     
-    // ۱. اگر کوکی معتبر داشت
+    // اگر کاربر لاگین است (کوکی دارد)
     if (cookie?.value === 'authenticated') {
+      // 👈 بسیار مهم: اگر درخواست به API است، اصلاً آن را به intlMiddleware نده
+      if (url.pathname.startsWith('/api/')) {
+        return NextResponse.next();
+      }
       return intlMiddleware(request);
     }
 
-    // ۲. اگر درخواست لاگین (Basic Auth) داشت
+    // اگر درخواست لاگین (Basic Auth) داشت
     if (basicAuth) {
       const authValue = basicAuth.split(' ')[1];
       try {
@@ -46,25 +46,23 @@ export function proxy(request: NextRequest) {
         const [user, pwd] = decoded.split(':');
 
         if (user === 'admin' && pwd === 'Parham@12345') { 
+          // اگر لاگین موفق بود، کوکی ست کن
+          if (url.pathname.startsWith('/api/')) {
+            const response = NextResponse.next();
+            response.cookies.set('admin_session', 'authenticated', { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 60 * 60 * 24 * 7 });
+            return response;
+          }
+          
           const response = intlMiddleware(request);
-          response.cookies.set('admin_session', 'authenticated', { 
-            path: '/', 
-            httpOnly: true, 
-            secure: process.env.NODE_ENV === 'production', 
-            sameSite: 'lax', 
-            maxAge: 60 * 60 * 24 * 7 
-          });
+          response.cookies.set('admin_session', 'authenticated', { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 60 * 60 * 24 * 7 });
           return response;
         }
       } catch (e) {}
     }
 
-    // ۳. اگر هیچ کدام نبود، مسدود کن
+    // اگر هیچ کدام نبود، مسدود کن
     if (url.pathname.startsWith('/api/admin')) {
-      return new NextResponse(
-        JSON.stringify({ error: 'Unauthorized access' }), 
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new NextResponse(JSON.stringify({ error: 'Unauthorized access' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
     }
     
     return new NextResponse('Authentication Required', {
@@ -73,7 +71,9 @@ export function proxy(request: NextRequest) {
     });
   }
 
-  // مسیرهای عمومی سایت
+  // =========================================================================
+  // ۳. مسیرهای عمومی سایت
+  // =========================================================================
   return intlMiddleware(request);
 }
 
