@@ -5,26 +5,19 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { query } from "@/lib/db";
+import React from "react";
 
 export const dynamic = 'force-dynamic';
 
-// =========================================================================
+// ============================================================================
 // تولید متادیتای سئو
-// =========================================================================
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string; slug: string }>;
-}): Promise<Metadata> {
+// ============================================================================
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
   const { locale, slug } = await params;
   const baseUrl = "https://parhamprojects.vercel.app";
-
+  
   try {
-    const result = await query(
-      "SELECT title, excerpt, seo_title, seo_description, image_url FROM posts WHERE slug = $1",
-      [slug]
-    );
-
+    const result = await query("SELECT title, excerpt, seo_title, seo_description, image_url FROM posts WHERE slug = $1", [slug]);
     if (result.rows.length > 0) {
       const post = result.rows[0];
       const title = post.seo_title || post.title;
@@ -61,109 +54,141 @@ export async function generateMetadata({
   } catch (error) {
     console.error("Metadata Fetch Error:", error);
   }
-
   return { title: "Post Not Found" };
 }
 
-// =========================================================================
-// تابع فرمت‌کننده و ضدتکرار محتوا
-// =========================================================================
+// ============================================================================
+// تابع ضدتکرار (حذف متن‌های تکراری)
+// ============================================================================
+function removeRepeatedText(text: string): string {
+  if (!text) return "";
+  let cleaned = text.trim();
+  const pattern = /([\s\S]{200,}?)\1+/g;
+  const match = pattern.exec(cleaned);
+  if (match) {
+    const dupText = match[1];
+    cleaned = cleaned.replace(dupText + dupText, dupText);
+    return removeRepeatedText(cleaned);
+  }
+  return cleaned;
+}
+
+// ============================================================================
+// پارسر هوشمند محتوا (تبدیل مارک‌داون و HTML به المان‌های زیبا)
+// ============================================================================
 function formatContent(content: string) {
   if (!content) return null;
 
-  // ۱. حذف عکس‌ها
-  let formatted = content.replace(/!\[.*?\]\(.*?\)/gi, '').replace(/<img[^>]*>/gi, '').trim();
+  // پاکسازی اولیه و حذف عکس‌های داخل متن
+  let cleaned = content.replace(/!\[.*?\]\(.*?\)/gi, '').replace(/<img[^>]*>/gi, '').trim();
+  cleaned = removeRepeatedText(cleaned);
 
-  // ۲. قطع کردن متن تکراری
-  const headingMatch = formatted.match(/##\s+.*?\n\n/);
-  
-  if (headingMatch) {
-    const firstHeading = headingMatch[0];
-    const firstIndex = formatted.indexOf(firstHeading);
-    const secondIndex = formatted.indexOf(firstHeading, firstIndex + 1);
-    
-    if (secondIndex !== -1) {
-      formatted = formatted.substring(0, secondIndex).trim();
-    }
-  } else {
-    const firstParagraphMatch = formatted.match(/^.*?\n\n/);
-    if (firstParagraphMatch) {
-      const firstPara = firstParagraphMatch[0];
-      const firstIndex = formatted.indexOf(firstPara);
-      const secondIndex = formatted.indexOf(firstPara, firstIndex + 1);
-      
-      if (secondIndex !== -1) {
-        formatted = formatted.substring(0, secondIndex).trim();
-      }
-    }
-  }
+  const isHtml = /<[a-z][\s\S]*>/i.test(cleaned);
 
-  if (formatted.length > 800) {
-    const half = Math.floor(formatted.length / 2);
-    if (formatted.substring(0, 200) === formatted.substring(half, half + 200)) {
-      formatted = formatted.substring(0, half).trim();
-    }
-  }
-
-  // ۳. رندر کردن HTML یا Markdown
-  const isHtml = /<[a-z][\s\S]*>/i.test(formatted);
-
+  // اگر محتوا HTML بود (توسط هوش مصنوعی تولید شده باشد)
   if (isHtml) {
-    let htmlFormatted = formatted;
-    htmlFormatted = htmlFormatted.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '<h1 class="text-3xl md:text-4xl font-bold text-foreground mt-12 mb-6">$1</h1>');
-    htmlFormatted = htmlFormatted.replace(/<h2[^>]*>(.*?)<\/h2>/gi, '<h2 class="text-2xl md:text-3xl font-bold text-foreground mt-10 mb-4">$1</h2>');
+    let htmlFormatted = cleaned;
+    
+    // جایگزینی تگ‌ها با کلاس‌های خوانا و مینیمال
+    htmlFormatted = htmlFormatted.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '<h1 class="text-3xl md:text-4xl font-bold text-foreground mt-16 mb-8 leading-tight">$1</h1>');
+    htmlFormatted = htmlFormatted.replace(/<h2[^>]*>(.*?)<\/h2>/gi, '<h2 class="text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6 leading-snug">$1</h2>');
     htmlFormatted = htmlFormatted.replace(/<h3[^>]*>(.*?)<\/h3>/gi, '<h3 class="text-xl md:text-2xl font-bold text-foreground mt-8 mb-4">$1</h3>');
-    htmlFormatted = htmlFormatted.replace(/<p[^>]*>(.*?)<\/p>/gi, '<p class="mb-6 text-base md:text-lg leading-relaxed text-muted font-light">$1</p>');
-    htmlFormatted = htmlFormatted.replace(/<ul[^>]*>/gi, '<ul class="mb-6 list-disc list-inside space-y-2 text-base md:text-lg text-muted font-light">');
-    htmlFormatted = htmlFormatted.replace(/<ol[^>]*>/gi, '<ol class="mb-6 list-decimal list-inside space-y-2 text-base md:text-lg text-muted font-light">');
-    htmlFormatted = htmlFormatted.replace(/<li[^>]*>(.*?)<\/li>/gi, '<li class="mb-2">$1</li>');
+    htmlFormatted = htmlFormatted.replace(/<p[^>]*>(.*?)<\/p>/gi, '<p class="mb-8 text-base md:text-lg leading-[2] text-muted font-light">$1</p>');
+    htmlFormatted = htmlFormatted.replace(/<ul[^>]*>/gi, '<ul class="mb-8 list-disc list-inside space-y-3 text-base md:text-lg leading-[1.8] text-muted font-light marker:text-brand">');
+    htmlFormatted = htmlFormatted.replace(/<ol[^>]*>/gi, '<ol class="mb-8 list-decimal list-inside space-y-3 text-base md:text-lg leading-[1.8] text-muted font-light marker:text-brand">');
+    htmlFormatted = htmlFormatted.replace(/<li[^>]*>(.*?)<\/li>/gi, '<li class="pl-2">$1</li>');
     htmlFormatted = htmlFormatted.replace(/<strong[^>]*>(.*?)<\/strong>/gi, '<strong class="font-bold text-foreground">$1</strong>');
     htmlFormatted = htmlFormatted.replace(/<b[^>]*>(.*?)<\/b>/gi, '<strong class="font-bold text-foreground">$1</strong>');
     htmlFormatted = htmlFormatted.replace(/<em[^>]*>(.*?)<\/em>/gi, '<em class="italic text-foreground/80">$1</em>');
+    htmlFormatted = htmlFormatted.replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gi, '<blockquote class="border-s-4 border-brand ps-6 my-10 italic text-lg md:text-xl text-foreground/80">$1</blockquote>');
 
-    return (
-      <div 
-        className="prose prose-invert max-w-none"
-        dangerouslySetInnerHTML={{ __html: htmlFormatted }} 
-      />
-    );
+    return <div className="max-w-none" dangerouslySetInnerHTML={{ __html: htmlFormatted }} />;
   }
 
-  return (
-    <div className="prose prose-invert prose-lg max-w-none text-muted leading-[2] md:leading-[2.3]">
-      {formatted.split("\n\n").map((paragraph: string, index: number) => {
-        if (paragraph.trim().startsWith("## ")) {
-          return (
-            <h2 key={index} className="mt-16 mb-6 text-2xl font-bold text-foreground md:text-3xl">
-              {paragraph.replace("## ", "")}
-            </h2>
-          );
-        }
-        if (paragraph.trim().startsWith("### ")) {
-          return (
-            <h3 key={index} className="mt-10 mb-4 text-xl font-bold text-foreground md:text-2xl">
-              {paragraph.replace("### ", "")}
-            </h3>
-          );
-        }
-        return (
-          <p key={index} className="mb-8 text-base md:text-lg font-light whitespace-pre-wrap">
-            {paragraph}
-          </p>
-        );
-      })}
-    </div>
-  );
+  // اگر محتوا مارک‌داون (Markdown) بود
+  const lines = cleaned.split('\n');
+  const elements: React.ReactNode[] = [];
+  let currentList: { type: 'ul' | 'ol', items: string[] } | null = null;
+  
+  const processInline = (text: string) => {
+    let t = text
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-foreground">$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em class="italic text-foreground/80">$1</em>')
+      .replace(/`(.*?)`/g, '<code class="bg-white/10 px-2 py-1 rounded text-sm text-brand font-mono">$1</code>');
+    return <span dangerouslySetInnerHTML={{ __html: t }} />;
+  };
+
+  const flushList = (key: number) => {
+    if (!currentList) return;
+    const ListTag = currentList.type;
+    elements.push(
+      <ListTag key={`list-${key}`} className={`mb-8 ps-6 space-y-3 text-base md:text-lg leading-[1.8] text-muted font-light list-inside ${currentList.type === 'ul' ? 'list-disc' : 'list-decimal'} marker:text-brand`}>
+        {currentList.items.map((item, i) => (
+          <li key={i} className="pl-2">{processInline(item)}</li>
+        ))}
+      </ListTag>
+    );
+    currentList = null;
+  };
+
+  let pBuffer: string[] = [];
+  
+  const flushParagraph = (key: number) => {
+    if (pBuffer.length === 0) return;
+    const text = pBuffer.join(' ');
+    elements.push(
+      <p key={`p-${key}`} className="mb-8 text-base md:text-lg leading-[2] text-muted font-light">
+        {processInline(text)}
+      </p>
+    );
+    pBuffer = [];
+  };
+
+  lines.forEach((line, index) => {
+    const trimmed = line.trim();
+    
+    if (!trimmed) {
+      flushParagraph(index);
+      flushList(index);
+      return;
+    }
+
+    if (trimmed.startsWith('### ')) {
+      flushParagraph(index); flushList(index);
+      elements.push(<h3 key={`h3-${index}`} className="text-xl md:text-2xl font-bold text-foreground mt-10 mb-4">{processInline(trimmed.replace('### ', ''))}</h3>);
+    } else if (trimmed.startsWith('## ')) {
+      flushParagraph(index); flushList(index);
+      elements.push(<h2 key={`h2-${index}`} className="text-2xl md:text-3xl font-bold text-foreground mt-14 mb-6 leading-snug">{processInline(trimmed.replace('## ', ''))}</h2>);
+    } else if (trimmed.startsWith('# ')) {
+      flushParagraph(index); flushList(index);
+      elements.push(<h1 key={`h1-${index}`} className="text-3xl md:text-4xl font-bold text-foreground mt-16 mb-8 leading-tight">{processInline(trimmed.replace('# ', ''))}</h1>);
+    } else if (trimmed.startsWith('> ')) {
+      flushParagraph(index); flushList(index);
+      elements.push(<blockquote key={`quote-${index}`} className="border-s-4 border-brand ps-6 my-10 italic text-lg md:text-xl text-foreground/80">{processInline(trimmed.replace('> ', ''))}</blockquote>);
+    } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+      flushParagraph(index);
+      if (currentList?.type !== 'ul') { flushList(index); currentList = { type: 'ul', items: [] }; }
+      currentList.items.push(trimmed.substring(2));
+    } else if (/^\d+\.\s/.test(trimmed)) {
+      flushParagraph(index);
+      if (currentList?.type !== 'ol') { flushList(index); currentList = { type: 'ol', items: [] }; }
+      currentList.items.push(trimmed.replace(/^\d+\.\s/, ''));
+    } else {
+      flushList(index);
+      pBuffer.push(trimmed);
+    }
+  });
+  
+  flushParagraph(9999);
+  flushList(9999);
+
+  return <div className="max-w-none">{elements}</div>;
 }
 
-// =========================================================================
-// کامپوننت اصلی
-// =========================================================================
-export default async function BlogPostPage({
-  params,
-}: {
-  params: Promise<{ locale: string; slug: string }>;
-}) {
+// ============================================================================
+// کامپوننت اصلی صفحه مقاله
+// ============================================================================
+export default async function BlogPostPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("Blog");
@@ -171,20 +196,13 @@ export default async function BlogPostPage({
 
   let post: any = null;
   try {
-    const result = await query(
-      "SELECT * FROM posts WHERE slug = $1 AND is_published = true",
-      [slug]
-    );
-    if (result.rows.length > 0) {
-      post = result.rows[0];
-    }
+    const result = await query("SELECT * FROM posts WHERE slug = $1 AND is_published = true", [slug]);
+    if (result.rows.length > 0) post = result.rows[0];
   } catch (error) {
     console.error("Failed to fetch post:", error);
   }
 
-  if (!post) {
-    notFound();
-  }
+  if (!post) notFound();
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -207,8 +225,12 @@ export default async function BlogPostPage({
       <Header locale={locale} />
 
       <main className="min-h-screen pt-32 pb-24 md:pt-44 md:pb-32 relative">
-        <div className="mx-auto max-w-4xl px-6">
+        {/* نور پس‌زمینه ملایم برای خوانایی بیشتر */}
+        <div className="pointer-events-none absolute top-0 left-1/2 -z-10 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-brand/5 blur-[120px]" />
+
+        <div className="mx-auto max-w-3xl px-6">
           
+          {/* دکمه بازگشت */}
           <Link
             href={`/${locale}/blog`}
             className="mb-12 inline-flex items-center gap-2 text-sm font-medium text-muted transition hover:text-brand"
@@ -217,40 +239,50 @@ export default async function BlogPostPage({
             {t("backToBlog")}
           </Link>
 
-          <div className="mb-12 md:mb-16">
-            <div className="mb-6 flex items-center gap-4">
-              <span className="rounded-full border border-brand/30 bg-brand/10 px-4 py-1.5 text-[10px] font-mono tracking-widest text-brand uppercase">
+          {/* هدر مقاله (عنوان، تاریخ و نویسنده) */}
+          <div className="mb-12 text-center md:mb-16">
+            <div className="mb-6 flex items-center justify-center gap-4">
+              <span className="rounded-full border border-brand/20 bg-brand/5 px-4 py-1.5 text-[10px] font-mono tracking-widest text-brand uppercase">
                 {post.category}
               </span>
-              <span className="text-[11px] font-mono tracking-widest text-muted" dir="ltr">
+            </div>
+            
+            <h1 className="text-3xl font-bold leading-[1.2] tracking-tight md:text-5xl lg:text-6xl text-foreground">
+              {post.title}
+            </h1>
+            
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4 text-sm text-muted">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand/10 text-brand font-bold text-xs">
+                  {post.author.charAt(0)}
+                </div>
+                <span className="font-semibold text-foreground">{post.author}</span>
+              </div>
+              <span className="hidden h-1 w-1 rounded-full bg-border sm:block" />
+              <span className="font-mono text-xs tracking-widest" dir="ltr">
                 {new Date(post.created_at).toLocaleDateString(locale === 'fa' ? 'fa-IR' : 'en-US')}
               </span>
             </div>
-            <h1 className="text-4xl font-bold leading-[1.15] tracking-tight md:text-5xl lg:text-6xl">
-              {post.title}
-            </h1>
-            <div className="mt-8 flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/20 border border-brand/30 text-brand font-bold text-sm">
-                {post.author.charAt(0)}
-              </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-semibold text-foreground">{post.author}</span>
-                <span className="text-[11px] text-muted">{isRtl ? "نویسنده" : "Author"}</span>
-              </div>
-            </div>
           </div>
 
+          {/* تصویر کاور (بزرگ و باکیفیت) */}
           {post.image_url && (
-            <div className="relative mb-16 md:mb-24 aspect-video w-full overflow-hidden rounded-3xl border border-white/5 bg-black/40 shadow-2xl">
+            <div className="relative mb-16 md:mb-20 aspect-[16/9] w-full overflow-hidden rounded-2xl md:rounded-3xl border border-white/5 bg-black/40 shadow-2xl">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={post.image_url} alt={post.title} className="object-cover w-full h-full" />
+              <img 
+                src={post.image_url} 
+                alt={post.title} 
+                className="object-cover w-full h-full" 
+              />
             </div>
           )}
 
+          {/* محتوای اصلی مقاله */}
           <div className="relative">
             {formatContent(post.content)}
 
-            <div className="pointer-events-none absolute bottom-0 end-0 opacity-20 mix-blend-screen pb-4 pe-4 md:pb-8 md:pe-8">
+            {/* امضای گرافیکی محو در انتهای مقاله */}
+            <div className="pointer-events-none absolute bottom-0 end-0 opacity-10 mix-blend-screen pb-4 pe-4 md:pb-8 md:pe-8">
               <div
                 className="signature-mask h-24 w-48 md:h-32 md:w-64"
                 style={{ maskPosition: isRtl ? "right center" : "left center", WebkitMaskPosition: isRtl ? "right center" : "left center" }}
@@ -258,7 +290,8 @@ export default async function BlogPostPage({
             </div>
           </div>
 
-          <div className="mt-32 pt-10 border-t border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-12">
+          {/* بخش دعوت به اقدام (CTA) */}
+          <div className="mt-24 md:mt-32 pt-10 border-t border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-12">
             <div>
               <h2 className="text-2xl font-bold text-foreground md:text-3xl">
                 {isRtl ? "پروژه‌ای در ذهن دارید؟" : "Have a project in mind?"}
