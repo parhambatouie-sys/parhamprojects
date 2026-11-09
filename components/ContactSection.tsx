@@ -21,7 +21,9 @@ export async function ContactSection({ locale }: { locale: string }) {
   const instagramVal = settings.instagram || t("instagramValue");
   const whatsappVal = settings.whatsapp || t("whatsappValue");
   const telegramVal = settings.telegram || t("telegramValue");
-  const baleVal = t("baleValue");
+  const baleVal = t("baleValue"); // بله فعلاً در دیتابیس نیست
+  const linkedinVal = settings.linkedin || "";
+  const githubVal = settings.github || "";
 
   const socials = [
     { name: t("instagramLabel"), value: instagramVal, href: `https://instagram.com/${instagramVal}` },
@@ -29,6 +31,14 @@ export async function ContactSection({ locale }: { locale: string }) {
     { name: t("telegramLabel"), value: telegramVal, href: `https://t.me/${telegramVal}` },
     { name: t("baleLabel"), value: baleVal, href: `https://ble.ir/${baleVal}` },
   ].filter(s => s.value && !s.value.includes("YOUR_")); // مخفی کردن اگر خالی بود
+
+  // اضافه کردن لینکدین و گیت‌هاب در صورت وجود
+  if (linkedinVal) {
+    socials.push({ name: "LinkedIn", value: linkedinVal, href: `https://linkedin.com/in/${linkedinVal}` });
+  }
+  if (githubVal) {
+    socials.push({ name: "GitHub", value: githubVal, href: `https://github.com/${githubVal}` });
+  }
 
   return (
     <section id="contact" className="relative scroll-mt-24 overflow-hidden border-t border-border px-4 py-12 md:px-6 md:py-32">

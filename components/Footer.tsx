@@ -1,10 +1,27 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { query } from "@/lib/db";
 
 export async function Footer({ locale }: { locale: string }) {
   const tNav = await getTranslations("Nav");
   const t = await getTranslations("Footer");
   const isRtl = locale === "fa";
+
+  // دریافت تنظیمات از دیتابیس (عنوان سایت، ایمیل و شماره تماس)
+  let settings: Record<string, string> = {};
+  try {
+    const result = await query("SELECT key, value FROM settings");
+    settings = result.rows.reduce((acc: any, row: any) => {
+      acc[row.key] = row.value;
+      return acc;
+    }, {});
+  } catch (error) {
+    console.error("Footer Settings Fetch Error:", error);
+  }
+
+  const siteTitle = settings.site_title || "Parham Batouie";
+  const contactEmail = settings.contact_email || "";
+  const contactPhone = settings.contact_phone || "";
 
   const navItems = [
     { href: `/${locale}`, label: tNav("home") },
@@ -52,11 +69,25 @@ export async function Footer({ locale }: { locale: string }) {
 
         </div>
 
-        {/* Bottom Row: Copyright Text */}
-        <div className="w-full border-t border-border/50 pt-6 mt-2">
+        {/* Bottom Row: Copyright & Contact Info */}
+        <div className="w-full border-t border-border/50 pt-6 mt-2 flex flex-col items-center justify-between gap-4 md:flex-row">
           <p className="text-center font-mono text-[9px] tracking-widest text-muted md:text-xs">
-            {t("rights")}
+            © {new Date().getFullYear()} {siteTitle}. {t("rights")}
           </p>
+          
+          {/* نمایش ایمیل و شماره تماس (اگر در پنل تنظیم شده باشند) */}
+          <div className="flex flex-wrap items-center justify-center gap-4 text-[9px] font-mono tracking-widest text-muted md:text-xs">
+            {contactEmail && (
+              <a href={`mailto:${contactEmail}`} className="transition hover:text-brand">
+                {contactEmail}
+              </a>
+            )}
+            {contactPhone && (
+              <a href={`tel:${contactPhone}`} className="transition hover:text-brand" dir="ltr">
+                {contactPhone}
+              </a>
+            )}
+          </div>
         </div>
 
       </div>
