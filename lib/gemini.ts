@@ -1,7 +1,8 @@
 // ============================================================================
-// تابع ارتباط با Google Gemini API (با پشتیبانی از کلیدهای AQ.)
+// تابع ارتباط با Google Gemini API (با تایم‌اوت و مدل جایگزین)
 // ============================================================================
 export async function reviewArticle(title: string, content: string, action: "review" | "rewrite") {
+  // دریافت کلید API از متغیرهای محیطی ورسل
   const apiKey = process.env.GEMINI_API_KEY;
   
   if (!apiKey) {
@@ -36,9 +37,6 @@ export async function reviewArticle(title: string, content: string, action: "rev
     Content: ${content}
   `;
 
-  // 👈 آدرس API (بدون ?key= در انتها)
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent`;
-
   const requestPayload = {
     contents: [
       {
@@ -51,37 +49,58 @@ export async function reviewArticle(title: string, content: string, action: "rev
     }
   };
 
-  try {
-    const response = await fetch(apiUrl, {
-      method: "POST", 
-      headers: {
-        "Content-Type": "application/json",
-        // 👈 ارسال کلید در هدر (روش صحیح برای کلیدهای AQ.)
-        "x-goog-api-key": apiKey
-      },
-      body: JSON.stringify(requestPayload)
-    });
+  // لیست مدل‌هایی که به ترتیب امتحان می‌شوند
+  const modelsToTry = ["gemini-3.8-flash", "gemini-1.5-flash"];
+  let lastError: any = null;
 
-    const data = await response.json();
+  for (const model of modelsToTry) {
+    try {
+      console.log(`Trying Gemini model: ${model}`);
+      
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-    if (!response.ok) {
-      console.error("Gemini API Error Response:", data);
-      throw new Error(data.error?.message || "خطای ناشناخته در ارتباط با Gemini API");
+      // ایجاد یک تایم‌اوت ۱۰ ثانیه‌ای برای هر مدل
+      const signal = AbortSignal.timeout(10000);
+
+      const response = await fetch(apiUrl, {
+        method: "POST", 
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(requestPayload),
+        signal: signal
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // اگر مدل جواب داد، متن را استخراج و برمی‌گردانیم
+        const resultText = data.candidates[0].content.parts[0].text;
+        let cleanText = resultText.trim();
+        
+        if (cleanText.startsWith("```json")) {
+          cleanText = cleanText.replace(/^```json\n/, "").replace(/\n```$/, "");
+        } else if (cleanText.startsWith("```")) {
+          cleanText = cleanText.replace(/^```\n/, "").replace(/\n```$/, "");
+        }
+        
+        return JSON.parse(cleanText);
+      } else {
+        // اگر خطا داد (مثل شلوغی یا نبود مدل)
+        console.warn(`Model ${model} failed:`, data.error?.message);
+        lastError = new Error(data.error?.message || "Gemini API Error");
+      }
+
+    } catch (error: any) {
+      console.warn(`Error with model ${model}:`, error.message);
+      if (error.name === "TimeoutError" || error.name === "AbortError") {
+        lastError = new Error("سرورهای گوگل پاسخ ندادند (بیش از ۱۰ ثانیه).");
+      } else {
+        lastError = error;
+      }
     }
-
-    const resultText = data.candidates[0].content.parts[0].text;
-    
-    let cleanText = resultText.trim();
-    if (cleanText.startsWith("```json")) {
-      cleanText = cleanText.replace(/^```json\n/, "").replace(/\n```$/, "");
-    } else if (cleanText.startsWith("```")) {
-      cleanText = cleanText.replace(/^```\n/, "").replace(/\n```$/, "");
-    }
-
-    return JSON.parse(cleanText);
-
-  } catch (error: any) {
-    console.error("Fetch Error in reviewArticle:", error);
-    throw error;
   }
+
+  // اگر هر دو مدل خطا دادند، خطای آخر را پرتاب می‌کنیم
+  throw lastError;
 }
