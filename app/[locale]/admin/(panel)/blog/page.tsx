@@ -17,11 +17,13 @@ type Post = {
   author: string; 
   seo_title: string; 
   seo_description: string; 
+  focus_keyword: string;
   locale: string; 
   is_published: boolean;
   ai_score?: number;
 };
 
+// مقادیر اولیه فرم
 const initialFormData = {
   title: "", 
   slug: "", 
@@ -32,6 +34,7 @@ const initialFormData = {
   author: "Parham Batouie", 
   seo_title: "", 
   seo_description: "", 
+  focus_keyword: "",
   locale: "fa", 
   is_published: true,
 };
@@ -40,16 +43,21 @@ const initialFormData = {
 // کامپوننت اصلی صفحه مدیریت وبلاگ
 // ============================================================================
 export default function AdminBlogPage() {
+  // استیت‌های مربوط به لیست مقالات
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
+  // استیت‌های مربوط به مودال‌ها
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [currentPost, setCurrentPost] = useState<Post | null>(null);
+  
+  // استیت فرم
   const [formData, setFormData] = useState(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // استیت‌های هوش مصنوعی
   const [aiTopic, setAiTopic] = useState("");
   const [aiTone, setAiTone] = useState("حرفه‌ای و صمیمی");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -61,11 +69,15 @@ export default function AdminBlogPage() {
     setLoading(true);
     setError("");
     
-    // تایم‌اوت ۱۵ ثانیه‌ای برای جلوگیری از گیر کردن بی‌نهایت
+    // ایجاد یک کنترلر برای جلوگیری از گیر کردن بی‌نهایت (تایم‌اوت ۱۵ ثانیه‌ای)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-    fetch("/api/admin/blog", { credentials: "include", cache: "no-store", signal: controller.signal })
+    fetch("/api/admin/blog", { 
+      credentials: "include", 
+      cache: "no-store", 
+      signal: controller.signal 
+    })
       .then((res) => {
         if (!res.ok) throw new Error(`خطای سرور (${res.status})`);
         return res.json();
@@ -87,6 +99,7 @@ export default function AdminBlogPage() {
       });
   };
 
+  // اجرای تابع در زمان لود شدن صفحه
   useEffect(() => { 
     fetchPosts(); 
   }, []);
@@ -102,7 +115,7 @@ export default function AdminBlogPage() {
         const res = await fetch(`/api/admin/blog/${post.id}`, { credentials: "include" });
         const data = await res.json();
         
-        // 👈 بررسی دقیق خطای سرور
+        // بررسی دقیق خطای سرور
         if (!res.ok) {
           throw new Error(data.error || `خطای سرور (${res.status})`);
         }
@@ -123,12 +136,12 @@ export default function AdminBlogPage() {
           author: fullPost.author || "Parham Batouie",
           seo_title: fullPost.seo_title || "", 
           seo_description: fullPost.seo_description || "", 
+          focus_keyword: fullPost.focus_keyword || "",
           locale: fullPost.locale || "fa", 
           is_published: fullPost.is_published,
         });
       } catch (err: any) {
         console.error("Fetch post details error:", err);
-        // 👈 نمایش دقیق متن خطا به جای پیام کلی
         alert(`خطا در دریافت جزئیات مقاله:\n${err.message || "خطای ناشناخته"}`);
       } finally {
         setLoading(false);
@@ -166,7 +179,8 @@ export default function AdminBlogPage() {
           content: data.data.content, 
           category: data.data.category, 
           seo_title: data.data.seo_title, 
-          seo_description: data.data.seo_description 
+          seo_description: data.data.seo_description,
+          focus_keyword: data.data.focus_keyword || ""
         });
         setIsAIModalOpen(false); 
         setIsModalOpen(true); 
@@ -324,6 +338,7 @@ export default function AdminBlogPage() {
             </div>
             
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* بخش ۱: اطلاعات اصلی */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="mb-1 block text-xs text-muted">عنوان *</label>
@@ -362,7 +377,27 @@ export default function AdminBlogPage() {
                   <input value={formData.author} onChange={(e) => setFormData({...formData, author: e.target.value})} className="w-full rounded-md border border-border bg-[#111315] px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none" />
                 </div>
               </div>
-              
+
+              {/* بخش ۲: تنظیمات سئو (جدید) */}
+              <div className="bg-black/20 p-4 rounded-lg border border-border/50 space-y-4 mt-6">
+                <h3 className="text-sm font-bold text-brand mb-2">تنظیمات سئو (SEO)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="mb-1 block text-xs text-muted">عنوان سئو (SEO Title)</label>
+                    <input value={formData.seo_title} onChange={(e) => setFormData({...formData, seo_title: e.target.value})} className="w-full rounded-md border border-border bg-[#111315] px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none" />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-muted">کلمه کلیدی اصلی (Focus Keyword)</label>
+                    <input value={formData.focus_keyword} onChange={(e) => setFormData({...formData, focus_keyword: e.target.value})} className="w-full rounded-md border border-border bg-[#111315] px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none" />
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-muted">توضیحات متا (Meta Description)</label>
+                  <textarea rows={2} value={formData.seo_description} onChange={(e) => setFormData({...formData, seo_description: e.target.value})} className="w-full rounded-md border border-border bg-[#111315] px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none resize-none" />
+                </div>
+              </div>
+
+              {/* بخش ۳: تصویر و انتشار */}
               <div className="bg-black/20 p-4 rounded-lg border border-border/50 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="mb-1 block text-xs text-muted">تصویر شاخص</label>

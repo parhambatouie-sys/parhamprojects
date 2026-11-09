@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 
+// جلوگیری از کش شدن این مسیر برای اعمال فوری تغییرات دیتابیس
 export const dynamic = 'force-dynamic';
 
 /**
@@ -13,10 +14,6 @@ export async function GET() {
     // ۱. آپدیت‌های مربوط به جدول پروژه‌ها (نمونه‌کارها)
     // ==========================================
     await query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS locale VARCHAR(5) DEFAULT 'fa';`);
-    await query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS content TEXT;`);
-    await query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS gallery_images TEXT;`);
-
-        // اضافه کردن ستون‌های مربوط به صفحه اختصاصی
     await query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS content TEXT;`);
     await query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS gallery_images TEXT;`);
     
@@ -53,15 +50,6 @@ export async function GET() {
     // ==========================================
     // ۴. ساخت جدول مقالات وبلاگ (Posts)
     // ==========================================
-        // ... (کدهای قبلی مربوط به ساخت جدول posts) ...
-
-    // اضافه کردن ستون‌های جدید برای امتیاز جمینای (این دو خط را اضافه کنید)
-    await query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS ai_score NUMERIC(4,1) DEFAULT 0;`);
-    await query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS review_feedback TEXT;`);
-
-    // ... (بقیه کدها مثل tg_state) ...
-    
-    
     await query(`
       CREATE TABLE IF NOT EXISTS posts (
         id SERIAL PRIMARY KEY,
@@ -77,14 +65,11 @@ export async function GET() {
         locale VARCHAR(5) DEFAULT 'fa',
         is_published BOOLEAN DEFAULT true,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-        
       );
-      
     `);
 
     // ==========================================
     // ۵. ساخت جدول وضعیت موقت ربات تلگرام (tg_state)
-    // این جدول برای ذخیره موقت اطلاعات مقاله (موضوع، زبان، عکس و...) استفاده می‌شود
     // ==========================================
     await query(`
       CREATE TABLE IF NOT EXISTS tg_state (
@@ -98,16 +83,15 @@ export async function GET() {
     `);
 
     // ==========================================
-    // ۶. افزودن ستون‌های جدید به جدول tg_state (اگر از قبل وجود داشته باشد)
+    // ۶. افزودن ستون‌های جدید به جداول موجود (برای دیتابیس‌های قدیمی)
     // ==========================================
-    await query(`ALTER TABLE tg_state ADD COLUMN IF NOT EXISTS language VARCHAR(5);`);
-    await query(`ALTER TABLE tg_state ADD COLUMN IF NOT EXISTS image_prompt TEXT;`);
-    await query(`ALTER TABLE tg_state ADD COLUMN IF NOT EXISTS image_url TEXT;`);
-    await query(`ALTER TABLE tg_state ADD COLUMN IF NOT EXISTS post_data TEXT;`);
+    await query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS ai_score NUMERIC(4,1) DEFAULT 0;`);
+    await query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS review_feedback TEXT;`);
+    await query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS focus_keyword VARCHAR(255);`);
 
     return NextResponse.json({ 
       success: true, 
-      message: "✅ تمام جداول (پروژه‌ها، خدمات، تنظیمات، مقالات و وضعیت تلگرام) با موفقیت آماده شدند." 
+      message: "✅ تمام جداول و ستون‌های جدید (از جمله کلمه کلیدی و امتیاز جمینای) با موفقیت آماده شدند." 
     });
   } catch (error: any) {
     console.error("Setup API Error:", error);
