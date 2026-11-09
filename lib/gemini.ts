@@ -1,5 +1,5 @@
 // ============================================================================
-// تابع ارتباط با Google Gemini API برای بررسی و بازنویسی مقالات
+// تابع ارتباط با Google Gemini API (نسخه جدید با Interactions API)
 // ============================================================================
 export async function reviewArticle(title: string, content: string, action: "review" | "rewrite") {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -36,33 +36,23 @@ export async function reviewArticle(title: string, content: string, action: "rev
     Content: ${content}
   `;
 
-  // 👈 به‌روزرسانی نهایی: استفاده از مدل gemini-3.8-flash
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+  // 👈 استفاده از نقطه اتصال جدید Interactions API
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/interactions`;
 
   const requestPayload = {
-    contents: [
-      {
-        role: "user",
-        parts: [
-          {
-            text: systemPrompt
-          }
-        ]
-      }
-    ],
-    generationConfig: {
-      temperature: 0.3
-    }
+    model: "gemini-3.8-flash", // مدل جدید و پایدار
+    input: systemPrompt
   };
 
   try {
-    // تایم‌اوت ۸ ثانیه‌ای برای جلوگیری از گیر کردن
+    // تایم‌اوت ۸ ثانیه‌ای
     const signal = AbortSignal.timeout(8000);
 
     const response = await fetch(apiUrl, {
       method: "POST", 
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey // روش احراز هویت برای Interactions API
       },
       body: JSON.stringify(requestPayload),
       signal: signal 
@@ -75,9 +65,10 @@ export async function reviewArticle(title: string, content: string, action: "rev
       throw new Error(data.error?.message || "خطای ناشناخته در ارتباط با Gemini API");
     }
 
+    // استخراج متن از پاسخ Interactions API
+    // ساختار پاسخ ممکن است کمی متفاوت باشد، اما فیلد اصلی متن در parts[0].text قرار دارد
     const resultText = data.candidates[0].content.parts[0].text;
     
-    // پاکسازی خروجی از تگ‌های مارک‌داون
     let cleanText = resultText.trim();
     if (cleanText.startsWith("```json")) {
       cleanText = cleanText.replace(/^```json\n/, "").replace(/\n```$/, "");
