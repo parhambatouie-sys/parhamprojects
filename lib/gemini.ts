@@ -1,8 +1,7 @@
 // ============================================================================
-// تابع ارتباط با Google Gemini API (با تایم‌اوت و مدل جایگزین)
+// تابع ارتباط با Google Gemini API (با تایم‌اوت و مدل جایگزین اصلاح‌شده)
 // ============================================================================
 export async function reviewArticle(title: string, content: string, action: "review" | "rewrite") {
-  // دریافت کلید API از متغیرهای محیطی ورسل
   const apiKey = process.env.GEMINI_API_KEY;
   
   if (!apiKey) {
@@ -49,8 +48,8 @@ export async function reviewArticle(title: string, content: string, action: "rev
     }
   };
 
-  // لیست مدل‌هایی که به ترتیب امتحان می‌شوند
-  const modelsToTry = ["gemini-3.8-flash", "gemini-1.5-flash"];
+  // 👈 مدل‌هایی که به ترتیب امتحان می‌شوند (مدل دوم اصلاح شد)
+  const modelsToTry = ["gemini-3.8-flash", "gemini-3-flash-preview"];
   let lastError: any = null;
 
   for (const model of modelsToTry) {
