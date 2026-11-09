@@ -1,5 +1,5 @@
 // ============================================================================
-// تابع ارتباط با Google Gemini API برای بررسی و بازنویسی مقالات
+// تابع ارتباط با Google Gemini API (با پشتیبانی از کلیدهای AQ.)
 // ============================================================================
 export async function reviewArticle(title: string, content: string, action: "review" | "rewrite") {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -36,8 +36,8 @@ export async function reviewArticle(title: string, content: string, action: "rev
     Content: ${content}
   `;
 
-  // آدرس جدید با مدل 3.8-flash و متد generateContent
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+  // 👈 آدرس API (بدون ?key= در انتها)
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent`;
 
   const requestPayload = {
     contents: [
@@ -51,59 +51,37 @@ export async function reviewArticle(title: string, content: string, action: "rev
     }
   };
 
-  const maxRetries = 1;
-  let lastError: any = null;
+  try {
+    const response = await fetch(apiUrl, {
+      method: "POST", 
+      headers: {
+        "Content-Type": "application/json",
+        // 👈 ارسال کلید در هدر (روش صحیح برای کلیدهای AQ.)
+        "x-goog-api-key": apiKey
+      },
+      body: JSON.stringify(requestPayload)
+    });
 
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      // 👈 افزایش زمان صبر از ۸ ثانیه به ۲۵ ثانیه
-      const signal = AbortSignal.timeout(25000);
+    const data = await response.json();
 
-      const response = await fetch(apiUrl, {
-        method: "POST", 
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(requestPayload),
-        signal: signal 
-      });
-
-      const data = await response.json();
-
-      // اگر گوگل گفت شلوغ هستم (503) یا درخواست زیاد دادی (429)، یک بار دیگر تلاش کن
-      if (response.status === 503 || response.status === 429) {
-        console.warn(`گوگل شلوغ است (${response.status})، تلاش مجدد... (تلاش ${attempt + 1} از ${maxRetries + 1})`);
-        lastError = new Error(data.error?.message || "سرورهای گوگل شلوغ هستند، لطفاً کمی بعد دوباره تلاش کنید.");
-        await new Promise(resolve => setTimeout(resolve, 2000)); // ۲ ثانیه صبر کن
-        continue;
-      }
-
-      if (!response.ok) {
-        throw new Error(data.error?.message || "خطای ناشناخته در ارتباط با Gemini API");
-      }
-
-      const resultText = data.candidates[0].content.parts[0].text;
-      
-      // پاکسازی خروجی از تگ‌های مارک‌داون
-      let cleanText = resultText.trim();
-      if (cleanText.startsWith("```json")) {
-        cleanText = cleanText.replace(/^```json\n/, "").replace(/\n```$/, "");
-      } else if (cleanText.startsWith("```")) {
-        cleanText = cleanText.replace(/^```\n/, "").replace(/\n```$/, "");
-      }
-
-      return JSON.parse(cleanText);
-
-    } catch (error: any) {
-      lastError = error;
-      if (error.name === "TimeoutError" || error.name === "AbortError") {
-        console.warn(`پاسخ گوگل طول کشید (بیش از ۲۵ ثانیه)، تلاش مجدد... (تلاش ${attempt + 1} از ${maxRetries + 1})`);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        continue;
-      }
-      throw error;
+    if (!response.ok) {
+      console.error("Gemini API Error Response:", data);
+      throw new Error(data.error?.message || "خطای ناشناخته در ارتباط با Gemini API");
     }
-  }
 
-  throw lastError;
+    const resultText = data.candidates[0].content.parts[0].text;
+    
+    let cleanText = resultText.trim();
+    if (cleanText.startsWith("```json")) {
+      cleanText = cleanText.replace(/^```json\n/, "").replace(/\n```$/, "");
+    } else if (cleanText.startsWith("```")) {
+      cleanText = cleanText.replace(/^```\n/, "").replace(/\n```$/, "");
+    }
+
+    return JSON.parse(cleanText);
+
+  } catch (error: any) {
+    console.error("Fetch Error in reviewArticle:", error);
+    throw error;
+  }
 }
