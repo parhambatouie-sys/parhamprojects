@@ -67,7 +67,11 @@ export default async function ProjectSinglePage({ params }: { params: Promise<{ 
                 </h2>
                 <div className="h-px flex-1 bg-border"></div>
               </div>
-              <LivePreviewFrame url={project.project_url} />
+             <LivePreviewFrame 
+  url={project.project_url} 
+  title={project.title}
+  description={project.description}
+/>
             </div>
           )}
 
