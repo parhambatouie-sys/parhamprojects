@@ -7,6 +7,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { query } from "@/lib/db";
 import "./globals.css";
+import { Preloader } from "@/components/Preloader";
 
 // ============================================================================
 // تنظیمات فونت سایت
@@ -109,7 +110,6 @@ export async function generateMetadata({
     ],
     creator: "Parham Batouie",
     metadataBase: new URL(baseUrl),
-    // 👈 کد تایید گوگل را به جای درست خودش منتقل کردم
     verification: {
       google: "aH2hxDMnztrFcsdqC5tPwZE50C5NvsV7jRNIq_9BRxs",
     },
@@ -217,48 +217,24 @@ export default async function LocaleLayout({
       className={vazirmatn.variable}
     >
       <head>
-        
-        {/* ==================================================================== */}
-        {/* اسکریپت داده‌های ساختاریافته */}
-        {/* ==================================================================== */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ 
             __html: JSON.stringify(jsonLd) 
           }}
         />
-
-        {/* ==================================================================== */}
-        {/* ⚠️ محل قرارگیری کدهای اضافی شما */}
-        {/* ==================================================================== */}
-        
-        {/* 
-        
-          [کدهای شخصی شما اینجا قرار می‌گیرند]
-          
-        */}
-
       </head>
       
       <body>
-        {/* 👈 فقط و فقط یک بار این خط باید وجود داشته باشد */}
+        {/* 👈 قرار دادن لودینگ سینمایی در بالاترین نقطه body */}
+        <Preloader />
+
         <NextIntlClientProvider>
           {children}
         </NextIntlClientProvider>
 
-        {/* ==================================================================== */}
-        {/* ⚠️ محل قرارگیری اسکریپت‌های انتهای body */}
-        {/* ==================================================================== */}
-
-        {/* 
-        
-          [اسکریپت‌های شخصی شما اینجا قرار می‌گیرند]
-          
-        */}
-        
         {/* کد گوگل آنالیتیکس */}
         <GoogleAnalytics gaId="G-CEMVY7WLCT" />
-
       </body>
     </html>
   );
