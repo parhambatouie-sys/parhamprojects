@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ExternalLink, RotateCw, ArrowRight } from "lucide-react";
+import { ExternalLink, RotateCw } from "lucide-react";
 
 export function LivePreviewFrame({ 
   url, 
@@ -16,19 +16,19 @@ export function LivePreviewFrame({
   const [showPortraitWarning, setShowPortraitWarning] = useState(true);
   const [forcePortrait, setForcePortrait] = useState(false);
 
-  // 👈 اگر کاربر دکمه "ادامه در حالت عمودی" رو زد، فقط توضیحات و دکمه رو نشون بده
+  // 👈 حالت ۱: وقتی کاربر دکمه "ادامه در حالت عمودی" رو میزنه
   if (forcePortrait) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-white/[0.02] border border-white/5 rounded-3xl my-12">
-        <h3 className="text-2xl font-bold mb-4 text-foreground">پیش‌نمایش زنده در حالت عمودی</h3>
-        <p className="text-muted mb-8 max-w-md leading-relaxed text-sm">
-          برای مشاهده دموی زنده، لطفاً دستگاه خود را به حالت افقی ببرید. یا از دکمه زیر برای مشاهده وب‌سایت کامل در یک تب جدید استفاده کنید.
+      <div className="flex flex-col items-center justify-center py-12 px-6 text-center bg-white/[0.02] border border-white/5 rounded-3xl my-8 max-w-md mx-auto">
+        <h3 className="text-xl font-bold mb-3 text-foreground">پیش‌نمایش وب‌سایت</h3>
+        <p className="text-muted mb-8 leading-relaxed text-sm">
+          برای مشاهده دموی زنده در این صفحه، گوشی خود را افقی کنید. یا از دکمه زیر برای مشاهده کامل سایت استفاده کنید.
         </p>
         <a
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="group flex items-center gap-3 bg-brand text-brand-foreground px-8 py-4 rounded-full font-bold text-sm transition-all hover:scale-105 shadow-xl"
+          className="group flex items-center gap-3 bg-brand text-brand-foreground px-8 py-3.5 rounded-full font-bold text-sm transition-all hover:scale-105 shadow-xl w-full justify-center"
         >
           <span>مشاهده وب‌سایت کامل</span>
           <ExternalLink size={18} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
@@ -41,7 +41,7 @@ export function LivePreviewFrame({
     <div className="w-full relative">
       
       {/* ==================================================================== */}
-      {/* 👈 ۱. نمایش در دسکتاپ */}
+      {/* 👈 حالت ۲: نمایش در دسکتاپ */}
       {/* ==================================================================== */}
       <motion.div 
         initial={{ opacity: 0, y: 30 }}
@@ -61,7 +61,9 @@ export function LivePreviewFrame({
             <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full z-40" />
             <iframe
               src={url}
-              className="w-full h-full bg-white rounded-[2.5rem] pt-4"
+              // 👈 مخفی کردن اسکرول‌بار داخل گوشی
+              className="w-full h-full bg-white rounded-[2.5rem] pt-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+              scrolling="no"
               sandbox="allow-scripts allow-same-origin"
               title="Mobile Preview"
             />
@@ -90,11 +92,11 @@ export function LivePreviewFrame({
       </motion.div>
 
       {/* ==================================================================== */}
-      {/* 👈 ۲. نمایش در موبایل */}
+      {/* 👈 حالت ۳: نمایش در موبایل */}
       {/* ==================================================================== */}
       <div className="flex md:hidden flex-col w-full relative">
         
-        {/* هشدار چرخش گوشی (با کلاس landscape:hidden خودکار محو میشه) */}
+        {/* هشدار چرخش گوشی (فقط در حالت عمودی) */}
         <AnimatePresence>
           {showPortraitWarning && (
             <motion.div 
@@ -110,63 +112,33 @@ export function LivePreviewFrame({
               </motion.div>
               <h3 className="text-2xl font-bold text-white mb-3">برای تجربه بهتر</h3>
               <p className="text-gray-400 text-sm max-w-[250px] leading-relaxed mb-10">
-                لطفاً گوشی خود را به صورت افقی بگیرید تا از نمای کامل دسکتاپ لذت ببرید.
+                لطفاً گوشی خود را به صورت افقی بگیرید تا نمای کامل دسکتاپ را ببینید.
               </p>
 
               <div className="flex flex-col gap-3 w-full max-w-[280px]">
-                {/* دکمه چرخش خودکار حذف شد */}
                 <button 
                   onClick={() => setForcePortrait(true)}
                   className="w-full bg-white/10 text-white py-3.5 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-white/20 transition-colors"
                 >
                   ادامه در حالت عمودی
                 </button>
-                <button 
-                  onClick={() => {
-                    const element = document.getElementById("project-details");
-                    if (element) element.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="w-full bg-transparent text-gray-400 py-2 rounded-xl text-sm mt-4 hover:text-white flex items-center justify-center gap-2"
-                >
-                  <ArrowRight size={16} className="rotate-180" /> بازگشت به توضیحات
-                </button>
+                {/* 👈 دکمه بازگشت به توضیحات حذف شد */}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* لپ‌تاپ (فقط وقتی گوشی افقی باشه نمایش داده میشه) */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          className="w-full flex-col items-center justify-center pt-4 px-2 landscape:flex hidden"
-        >
-          <div className="relative w-full max-w-4xl aspect-[16/10] bg-[#1a1a1a] rounded-t-xl border-[4px] border-[#2a2a2a] shadow-2xl overflow-hidden">
-            <div className="h-5 bg-[#151515] flex items-center px-3 gap-1.5 border-b border-white/5">
-              <div className="w-2 h-2 rounded-full bg-red-500" />
-              <div className="w-2 h-2 rounded-full bg-yellow-500" />
-              <div className="w-2 h-2 rounded-full bg-green-500" />
-            </div>
-            
-            {/* اسکیل کردن دسکتاپ برای جا شدن در صفحه افقی */}
-            <div className="relative w-full h-[calc(100%-20px)] overflow-hidden bg-white">
-              <iframe
-                src={url}
-                className="absolute top-0 left-0 w-[1280px] h-[800px] origin-top-left"
-                style={{ transform: "scale(0.45)" }}
-                sandbox="allow-scripts allow-same-origin"
-                title="Desktop Preview"
-              />
-            </div>
-          </div>
-          
-          {/* بدنه زیرین مک‌بوک */}
-          <div className="relative w-full max-w-4xl h-8 bg-gradient-to-b from-[#e0e0e0] to-[#b0b0b0] dark:from-[#2a2a2a] dark:to-[#1a1a1a] rounded-b-xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] flex flex-col items-center pt-1">
-            <div className="absolute -top-1 w-16 h-1 bg-[#1a1a1a] dark:bg-[#111] rounded-b-sm" />
-            <div className="w-[90%] h-2 bg-[#c0c0c0] dark:bg-[#333] rounded-sm mb-1 shadow-inner" />
-            <div className="w-16 h-1.5 bg-[#c0c0c0] dark:bg-[#333] rounded-sm shadow-inner" />
-          </div>
-        </motion.div>
+        {/* 👈 حالت افقی موبایل: نمایش دسکتاپ تمام‌صفحه بدون قاب گوشی */}
+        <div className="hidden landscape:fixed landscape:inset-0 landscape:z-[9998] landscape:bg-[#0a0a0a] landscape:flex landscape:w-screen landscape:h-screen landscape:flex-col">
+            <iframe
+              src={url}
+              // مقیاس دهی به سایت دسکتاپ برای جا شدن در صفحه افقی گوشی
+              className="w-[1280px] h-[800px] origin-top-left"
+              style={{ transform: "scale(0.45)" }} 
+              sandbox="allow-scripts allow-same-origin"
+              title="Desktop Full Preview"
+            />
+        </div>
       </div>
     </div>
   );
