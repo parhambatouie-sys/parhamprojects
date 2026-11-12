@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { LivePreviewFrame } from "@/components/LivePreviewFrame"; // 👈 اضافه شد
 import { query } from "@/lib/db";
 
 export const dynamic = 'force-dynamic';
@@ -54,6 +55,19 @@ export default async function ProjectSinglePage({ params }: { params: Promise<{ 
             <div className="relative mb-20 aspect-video w-full overflow-hidden rounded-3xl border border-white/5 bg-black/40 shadow-2xl">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={project.image_url} alt={project.title} className="object-cover w-full h-full" />
+            </div>
+          )}
+
+          {/* 👈 بخش پیش‌نمایش زنده (دسکتاپ و موبایل) */}
+          {project.project_url && (
+            <div className="mb-24 md:mb-32">
+              <div className="mb-10 flex items-center gap-4">
+                <h2 className="text-2xl font-bold text-foreground md:text-3xl">
+                  {isRtl ? "پیش‌نمایش زنده" : "Live Preview"}
+                </h2>
+                <div className="h-px flex-1 bg-border"></div>
+              </div>
+              <LivePreviewFrame url={project.project_url} />
             </div>
           )}
 
