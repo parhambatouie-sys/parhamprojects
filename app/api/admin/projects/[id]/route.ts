@@ -2,35 +2,40 @@ import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { sendTelegramNotification } from "@/lib/telegram";
 
-export const dynamic = 'force-dynamic';
-
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const { id } = await params;
     const body = await request.json();
     const { 
-      title, description, category, technologies, 
+      title, description, content, gallery_images, // 👈 این دو مورد برای ویرایش هم اضافه شدند
+      category, technologies, 
       project_url, github_url, image_url, 
-      is_featured, is_published, sort_order, locale 
+      is_featured, is_published, sort_order, locale
     } = body;
 
     const result = await query(
-      `UPDATE projects SET 
-        title = $1, description = $2, category = $3, technologies = $4, 
-        project_url = $5, github_url = $6, image_url = $7, 
-        is_featured = $8, is_published = $9, sort_order = $10, locale = $11 
-       WHERE id = $12 RETURNING *`,
+      `UPDATE projects 
+       SET title = $1, description = $2, content = $3, gallery_images = $4, category = $5, technologies = $6, project_url = $7, github_url = $8, image_url = $9, is_featured = $10, is_published = $11, sort_order = $12, locale = $13 
+       WHERE id = $14 RETURNING *`,
       [
-        title, description, category, technologies, 
+        title, description, content || "", gallery_images || "[]", 
+        category, technologies, 
         project_url, github_url, image_url, 
-        is_featured, is_published, sort_order, locale, id
+        is_featured || false, is_published !== false, sort_order || 0, locale || 'fa',
+        id
       ]
     );
 
-    if (result.rowCount === 0) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    if (result.rows.length === 0) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
 
     // ارسال پیام به تلگرام
-    await sendTelegramNotification(`✏️ **یک نمونه‌کار ویرایش شد.**\n\n📌 عنوان: ${title}\n🌐 زبان: ${locale === 'fa' ? 'فارسی' : 'انگلیسی'}`);
+    const message = `✏️ **نمونه‌کار ویرایش شد!**\n\n📌 عنوان: ${title}\n🌐 زبان: ${locale === 'fa' ? 'فارسی' : 'انگلیسی'}\n📁 دسته: ${category}`;
+    await sendTelegramNotification(message);
 
     return NextResponse.json({ success: true, project: result.rows[0] });
   } catch (error: any) {
@@ -38,16 +43,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const { id } = await params;
-    const result = await query("DELETE FROM projects WHERE id = $1", [id]);
-    if (result.rowCount === 0) return NextResponse.json({ error: "Project not found" }, { status: 404 });
-
-    // ارسال پیام به تلگرام
-    await sendTelegramNotification(`🗑️ **یک نمونه‌کار حذف شد!**\n\n🆔 شناسه: ${id}`);
-
-    return NextResponse.json({ success: true, message: "Project deleted successfully" });
+    await query("DELETE FROM projects WHERE id = $1", [id]);
+    return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Failed to delete project" }, { status: 500 });
   }

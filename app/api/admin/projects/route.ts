@@ -17,16 +17,18 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { 
-      title, description, category, technologies, 
+      title, description, content, gallery_images, // 👈 این دو مورد اضافه شدند
+      category, technologies, 
       project_url, github_url, image_url, 
       is_featured, is_published, sort_order, locale
     } = body;
 
     const result = await query(
-      `INSERT INTO projects (title, description, category, technologies, project_url, github_url, image_url, is_featured, is_published, sort_order, locale) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+      `INSERT INTO projects (title, description, content, gallery_images, category, technologies, project_url, github_url, image_url, is_featured, is_published, sort_order, locale) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
       [
-        title, description, category, technologies, 
+        title, description, content || "", gallery_images || "[]", // 👈 به کوئری دیتابیس هم اضافه شدند
+        category, technologies, 
         project_url, github_url, image_url, 
         is_featured || false, is_published !== false, sort_order || 0, locale || 'fa'
       ]
