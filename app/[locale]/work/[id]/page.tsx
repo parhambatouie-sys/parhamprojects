@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { LivePreviewFrame } from "@/components/LivePreviewFrame"; // 👈 اضافه شد
+import { ProjectPreview } from "@/components/ProjectPreview";
 import { query } from "@/lib/db";
 
 export const dynamic = 'force-dynamic';
@@ -58,20 +58,21 @@ export default async function ProjectSinglePage({ params }: { params: Promise<{ 
             </div>
           )}
 
-          {/* 👈 بخش پیش‌نمایش زنده (دسکتاپ و موبایل) */}
+          {/* 👈 بخش پیش‌نمایش جدید (کاملاً تمیز و بدون کد اضافه) */}
           {project.project_url && (
             <div className="mb-24 md:mb-32">
               <div className="mb-10 flex items-center gap-4">
                 <h2 className="text-2xl font-bold text-foreground md:text-3xl">
-                  {isRtl ? "پیش‌نمایش زنده" : "Live Preview"}
+                  {isRtl ? "پیش‌نمایش" : "Preview"}
                 </h2>
                 <div className="h-px flex-1 bg-border"></div>
               </div>
-             <LivePreviewFrame 
-  url={project.project_url} 
-  title={project.title}
-  description={project.description}
-/>
+              <ProjectPreview 
+                url={project.project_url} 
+                title={project.title}
+                description={project.description || "پروژه‌ای مدرن و کاربرپسند."}
+                imageUrl={project.image_url}
+              />
             </div>
           )}
 
