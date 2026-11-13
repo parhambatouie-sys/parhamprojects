@@ -5,6 +5,7 @@ import { setRequestLocale } from "next-intl/server";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { query } from "@/lib/db";
+import { ArrowUpRight, ArrowRight } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
 
@@ -35,70 +36,144 @@ export default async function ProjectSinglePage({ params }: { params: Promise<{ 
   return (
     <>
       <Header locale={locale} />
-      <main className="min-h-screen pt-32 pb-24 md:pt-44 md:pb-32 relative bg-background">
-        <div className="mx-auto max-w-7xl px-6">
+      <main className="min-h-screen pt-24 pb-24 md:pt-32 md:pb-32 relative bg-[#0a0a0a] text-white">
+        
+        <div className="mx-auto max-w-6xl px-6">
           
-          <Link href={`/${locale}#work`} className="mb-12 inline-flex items-center gap-2 text-sm font-medium text-muted transition hover:text-brand">
-            <span className={isRtl ? "rotate-180" : ""}>←</span>{isRtl ? "بازگشت به نمونه‌کارها" : "Back to Work"}
+          {/* دکمه بازگشت */}
+          <Link href={`/${locale}#work`} className="group mb-12 inline-flex items-center gap-2 text-sm font-medium text-gray-400 transition hover:text-white">
+            <ArrowRight size={16} className={`transition-transform group-hover:-translate-x-1 ${!isRtl ? 'rotate-180 group-hover:translate-x-1' : ''}`} />
+            {isRtl ? "بازگشت به نمونه‌کارها" : "Back to Work"}
           </Link>
 
-          <div className="mb-16 md:mb-24 max-w-4xl">
-            <div className="mb-6 flex items-center gap-4">
-              <span className="rounded-full border border-brand/30 bg-brand/10 px-4 py-1.5 text-[10px] font-mono tracking-widest text-brand uppercase">{project.category}</span>
-              {project.is_featured && <span className="text-xs font-bold text-brand">★ Featured Project</span>}
+          {/* هدر پروژه */}
+          <div className="mb-12 md:mb-20 max-w-4xl">
+            <div className="mb-6 flex flex-wrap items-center gap-4">
+              <span className="rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-[10px] font-mono tracking-widest text-gray-300 uppercase">
+                {project.category}
+              </span>
+              {project.is_featured && (
+                <span className="flex items-center gap-1.5 text-xs font-bold text-orange-500">
+                  <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
+                  پروژه ویژه
+                </span>
+              )}
             </div>
-            <h1 className="text-5xl font-bold leading-[1.1] tracking-tight md:text-7xl lg:text-8xl">{project.title}</h1>
+            <h1 className="text-4xl font-bold leading-[1.2] tracking-tight md:text-5xl lg:text-6xl text-balance">
+              {project.title}
+            </h1>
+            <p className="mt-6 text-lg text-gray-400 leading-relaxed max-w-2xl">
+              {project.description}
+            </p>
           </div>
 
+          {/* 👈 قاب عکس کاور (بازطراحی شده) */}
           {project.image_url && (
-            <div className="relative mb-20 aspect-video w-full overflow-hidden rounded-3xl border border-white/5 bg-black/40 shadow-2xl">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={project.image_url} alt={project.title} className="object-cover w-full h-full" />
+            <div className="relative mb-20 md:mb-32 group">
+              {/* هاله نورانی پشت عکس */}
+              <div className="absolute -inset-4 bg-gradient-to-r from-orange-500/20 to-purple-500/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 -z-10" />
+              
+              {/* قاب اصلی عکس */}
+              <div className="relative w-full max-h-[75vh] aspect-video md:aspect-[21/9] overflow-hidden rounded-2xl md:rounded-[2rem] border border-white/10 bg-[#111] shadow-2xl">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src={project.image_url} 
+                  alt={project.title} 
+                  className="w-full h-full object-cover object-top transition-transform duration-1000 group-hover:scale-105" 
+                />
+                {/* گرادیانت برای خوانایی بیشتر در پایین عکس */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+              </div>
             </div>
           )}
 
-          <div className="grid gap-16 md:grid-cols-[1fr_350px] lg:gap-24">
-            <div className="prose prose-invert prose-lg max-w-none text-muted leading-[2] md:leading-[2.2]">
-              <h2 className="text-3xl font-bold text-foreground mb-8">{isRtl ? "جزئیات پروژه" : "Project Details"}</h2>
-              {(project.content || project.description || "").split('\n').map((paragraph: string, index: number) => (
-                <p key={index} className="mb-8 text-base md:text-lg font-light">{paragraph}</p>
-              ))}
+          {/* بخش محتوا و اطلاعات */}
+          <div className="grid gap-16 md:grid-cols-12 lg:gap-24">
+            
+            {/* ستون سمت راست: توضیحات (Case Study) */}
+            <div className="md:col-span-8">
+              <div className="prose prose-invert prose-lg max-w-none text-gray-400 leading-[2] md:leading-[2.2]">
+                <h2 className="text-2xl font-bold text-white mb-8 border-b border-white/10 pb-4">
+                  {isRtl ? "جزئیات و چالش‌های پروژه" : "Project Details"}
+                </h2>
+                {(project.content || project.description || "").split('\n').map((paragraph: string, index: number) => (
+                  <p key={index} className="mb-6 text-base md:text-lg font-light text-justify">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
             </div>
 
-            <div className="space-y-10 md:sticky md:top-32 h-fit">
-              {project.technologies && (
-                <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-6">
-                  <h3 className="mb-4 text-[10px] font-mono uppercase tracking-widest text-brand">{isRtl ? "تکنولوژی‌ها" : "Technologies"}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {project.technologies.split(',').map((tech: string, i: number) => (
-                      <span key={i} className="rounded-md border border-white/5 bg-black/20 px-3 py-1.5 text-xs font-mono text-muted">{tech.trim()}</span>
-                    ))}
+            {/* ستون سمت چپ: اطلاعات و دکمه‌ها (Sticky) */}
+            <div className="md:col-span-4 space-y-8 md:sticky md:top-32 h-fit">
+              
+              {/* کارت اطلاعات */}
+              <div className="rounded-2xl border border-white/10 bg-[#111] p-6 shadow-xl">
+                <h3 className="mb-6 text-xs font-mono uppercase tracking-widest text-orange-500">
+                  {isRtl ? "اطلاعات پروژه" : "Project Info"}
+                </h3>
+                
+                <div className="space-y-4 text-sm">
+                  <div className="flex justify-between border-b border-white/5 pb-3">
+                    <span className="text-gray-500">دسته‌بندی</span>
+                    <span className="font-medium text-white">{project.category}</span>
                   </div>
+                  {project.technologies && (
+                    <div className="flex flex-col gap-2 border-b border-white/5 pb-4">
+                      <span className="text-gray-500 mb-1">تکنولوژی‌ها</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {project.technologies.split(',').map((tech: string, i: number) => (
+                          <span key={i} className="rounded bg-white/5 px-2.5 py-1 text-xs font-mono text-gray-300">
+                            {tech.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-              <div className="space-y-4 pt-6 border-t border-border">
-                {project.project_url && (
-                  <a href={project.project_url} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-between rounded-xl bg-brand px-6 py-4 text-sm font-bold text-brand-foreground transition hover:opacity-90">
-                    {isRtl ? "مشاهده وب‌سایت" : "Visit Website"}<span className={isRtl ? "rotate-180" : ""}>→</span>
-                  </a>
-                )}
-                {project.github_url && (
-                  <a href={project.github_url} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-between rounded-xl border border-border px-6 py-4 text-sm font-bold text-foreground transition hover:bg-white/5">
-                    {isRtl ? "سورس کد" : "Source Code"}<span className={isRtl ? "rotate-180" : ""}>→</span>
-                  </a>
-                )}
+
+                {/* دکمه مشاهده سایت */}
+                <div className="mt-8">
+                  {project.project_url ? (
+                    <a 
+                      href={project.project_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="group flex w-full items-center justify-between rounded-xl bg-orange-500 px-6 py-4 text-sm font-bold text-white transition-all hover:bg-orange-600 hover:scale-[1.02] shadow-[0_0_20px_rgba(249,115,22,0.3)]"
+                    >
+                      <span>{isRtl ? "مشاهده وب‌سایت زنده" : "Visit Live Website"}</span>
+                      <ArrowUpRight size={18} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+                    </a>
+                  ) : (
+                    <div className="text-center p-4 border border-white/10 rounded-xl text-gray-500 text-sm">
+                      لینک دمو ثبت نشده است
+                    </div>
+                  )}
+                </div>
               </div>
+
             </div>
           </div>
 
+          {/* گالری تصاویر */}
           {gallery.length > 0 && (
-            <div className="mt-24 pt-16 border-t border-border">
-              <h2 className="mb-10 text-3xl font-bold text-foreground">{isRtl ? "گالری تصاویر" : "Project Gallery"}</h2>
-              <div className="grid gap-6 md:grid-cols-2">
+            <div className="mt-24 pt-16 border-t border-white/10">
+              <h2 className="mb-12 text-center text-2xl md:text-3xl font-bold text-white">
+                {isRtl ? "گالری تصاویر" : "Project Gallery"}
+              </h2>
+              <div className="columns-1 md:columns-2 gap-6 space-y-6">
                 {gallery.map((imgUrl, i) => (
-                  <div key={i} className={`relative overflow-hidden rounded-2xl border border-white/5 bg-black/20 ${i % 3 === 0 ? 'md:col-span-2 aspect-[21/9]' : 'aspect-[4/3]'}`}>
+                  <div 
+                    key={i} 
+                    className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#111] break-inside-avoid group"
+                  >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={imgUrl} alt={`${project.title} gallery ${i}`} className="object-cover w-full h-full transition-transform duration-700 hover:scale-105" />
+                    <img 
+                      src={imgUrl} 
+                      alt={`${project.title} gallery ${i}`} 
+                      className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105" 
+                    />
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
                 ))}
               </div>
